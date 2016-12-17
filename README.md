@@ -39,5 +39,5 @@
 
 支持的链接格式：
 
-* **网易云音乐 (ntes)** : http://music.163.com/#/m/song?id=\<ID\>
-* **qq音乐 (qq)** : https://y.qq.com/portal/song/\<ID\>.html
+* **网易云音乐 (ntes)** : http://music.163.com/#/m/song?id=XXXXXX
+* **qq音乐 (qq)** : https://y.qq.com/portal/song/XXXXXX.html
