@@ -1,6 +1,6 @@
 var common = require(phantom.libraryPath + '/core/common.js')
 
-exports.download = function download_ntes(id, response) {
+exports.download = function (id, response) {
 	var log = common.createLog('ntes', id)
 	var url = 'http://music.163.com/#/m/song?id=' + id
 	log('open: ' + url)
@@ -71,6 +71,7 @@ exports.download = function download_ntes(id, response) {
 					response(common.makeResponseData([
 						song_info,
 						{
+                            'source': 'ntes',
 							'id': id,
 							'lrc': data['lrc'] != null && data['lrc']['lyric'] || null,
 							'tlrc': data['tlyric'] != null && data['tlyric']['lyric'] || null

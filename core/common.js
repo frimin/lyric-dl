@@ -77,6 +77,7 @@ exports.makeResponseData = function(dataList) {
 		// 'mv_id': merge['mv_id'] || null,
 		'album_name': merge['album_name'] || null,
 		'album_id': merge['album_id'] || null,
+		'source': merge['source'],
 		'code': 200,
 	}
 

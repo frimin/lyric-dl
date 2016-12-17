@@ -6,19 +6,36 @@ var common = require(phantom.libraryPath + '/core/common.js')
 var minimist = require(phantom.libraryPath + '/core/minimist.js')
 
 function download(opt, url, response) {
+    var loader = null
+    var song_id = null
+
     if (url.indexOf('http://music.163.com/#/m/song?id=') != -1) {
         var m = url.match(/id=(\d+)/)
 
         if (!m || m.length != 2) {
             console.log("invalid url")
             phantom.exit(2)
+        } else {
+            loader = require(phantom.libraryPath + '/core/downloader/ntes.js')
+            song_id = m[1]
         }
+    } else if (url.indexOf('https://y.qq.com/portal/song/') != -1) {
+        var m = url.match(/song\/(\w+)\.html/)
 
-        var ntes = require(phantom.libraryPath + '/core/downloader/ntes.js')
-        ntes.download(m[1], response)
-    } else  {
+        if (!m || m.length != 2) {
+            console.log("invalid url")
+            phantom.exit(2)
+        } else {
+            loader = require(phantom.libraryPath + '/core/downloader/qq.js')
+            song_id = m[1]
+        }
+    }
+
+    if (loader == null || song_id == null) {
         console.log("invalid url")
         phantom.exit(2)
+    } else {
+        loader.download(song_id, response)
     }
 }
 
@@ -32,12 +49,15 @@ command: url - download lyric:\n\
 \n\
     SUPPORT: \n\
     * cloudmusic: http://music.163.com/#/m/song?id=<ID> \n\
+    * qqmusic: https://y.qq.com/portal/song/<ID>.html \n\
 \n\
     OPTIONS: \n\
     -o --output=<file>          name of output file, if translate lyric exists, named: <file>.tr\n\
     -O --out-format=<format>    output file in given format: <format>=[lrc, json]\n\
 \n\
 samples: lyric-dl url <URL> -o download\n\
+\n\
+https://github.com/frimin/lyric-dl\
 ")
     phantom.exit(0)
 }
@@ -49,17 +69,22 @@ handler.url = function (opt) {
     }
 
     download(opt, args['_'][2], function(result) {
-        var outfile = opt['o'] || opt['output'] || result['name']
         var outformat = opt['O'] || opt['out-format'] || 'lrc'
 
         switch (outformat)
         {
             case 'lrc':
-                fs.write(outfile, result['lrc'], 'w')
+                var outfile = opt['o'] || opt['output'] || result['name']
+
+                if (result['lrc'])
+                    fs.write(outfile, result['lrc'], 'w')
+
                 if (result['tlrc'])
                     fs.write(outfile + '.tr', result['tlrc'], 'w')
                 break
             case 'json':
+                var outfile = opt['o'] || opt['output'] || (result['name'] + '.json')
+                
                 fs.write(outfile, JSON.stringify(result), 'w')
                 break
             default:
