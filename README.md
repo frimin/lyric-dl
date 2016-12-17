@@ -2,7 +2,7 @@
 
 命令行中下载在线歌词的工具
 
-## INSTALLATION
+# INSTALLATION
 
 对于 UNIX 用户 (Linux, OS X, 其他):
 
@@ -12,18 +12,18 @@
 
 	$ npm install phantomjs -g
 	
-## USAGE
+# USAGE
 
 在使用脚本之前先为其添加可执行权限
 
 	chmod u+x lyric-dl
 
-### 命令格式
+## 命令格式
 	lyric-dl [命令 [参数 [参数 ...]]] [选项]
 
-#### 下载歌词
+### 下载歌词
 
-命令: __url__
+直接在命令行中下载歌词:
 
 	./lyric-dl url <url>
 	
@@ -41,3 +41,16 @@
 
 * **网易云音乐 (ntes)** : http://music.163.com/#/m/song?id=XXXXXX
 * **qq音乐 (qq)** : https://y.qq.com/portal/song/XXXXXX.html
+
+### 启动 Web 服务器
+
+支持启动一个 web 服务器以提供 webapi 接口:
+
+	./lyric-dl server -h 127.0.0.1 -p 8080
+	
+可以用下列命令测试:
+	
+	curl "http://localhost:8080/?act=id&id=<song_id>&s=<source_type>"
+	
+### 获得其他帮助内容
+	./lyric-dl --help

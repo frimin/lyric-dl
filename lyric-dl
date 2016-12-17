@@ -5,6 +5,11 @@ var fs = require('fs');
 var common = require(phantom.libraryPath + '/core/common.js')
 var minimist = require(phantom.libraryPath + '/core/minimist.js')
 
+var loadersets = {
+    'ntes': require(phantom.libraryPath + '/core/downloader/ntes.js'),
+    'qq': require(phantom.libraryPath + '/core/downloader/qq.js'),
+}
+
 function download(opt, url, response) {
     var loader = null
     var song_id = null
@@ -16,7 +21,7 @@ function download(opt, url, response) {
             console.log("invalid url")
             phantom.exit(2)
         } else {
-            loader = require(phantom.libraryPath + '/core/downloader/ntes.js')
+            loader = loadersets['ntes']
             song_id = m[1]
         }
     } else if (url.indexOf('https://y.qq.com/portal/song/') != -1) {
@@ -26,7 +31,7 @@ function download(opt, url, response) {
             console.log("invalid url")
             phantom.exit(2)
         } else {
-            loader = require(phantom.libraryPath + '/core/downloader/qq.js')
+            loader = loadersets['qq']
             song_id = m[1]
         }
     }
@@ -45,19 +50,28 @@ handler.help = function (opt) {
     console.log("\
 Usage: lyric-dl [cmd [arg [arg ...]]] [OPTIONS]\n\
 \n\
-command: url - download lyric:\n\
+command: [url] - download lyric:\n\
 \n\
-    SUPPORT: \n\
-    * cloudmusic: http://music.163.com/#/m/song?id=<ID> \n\
-    * qqmusic: https://y.qq.com/portal/song/<ID>.html \n\
+    SUPPORT URL: \n\
+    * ntes (cloudmusic) : http://music.163.com/#/m/song?id=<ID> \n\
+    * qq (qqmusic) : https://y.qq.com/portal/song/<ID>.html \n\
 \n\
     OPTIONS: \n\
     -o --output=<file>          name of output file, if translate lyric exists, named: <file>.tr\n\
     -O --out-format=<format>    output file in given format: <format>=[lrc, json]\n\
 \n\
+command: [server] - launch http service:\n\
+\n\
+    SUPPORT ACTION: \n\
+    * id : request lyric info - http://localhost:8080/?act=id&id=<song_id>&s=<source_type> \n\
+\n\
+    OPTIONS: \n\
+    -h --host=<host>            bind address (default: 127.0.0.1)\n\
+    -p --port=<format>          bind port (default: 8080)\n\
+\n\
 samples: lyric-dl url <URL> -o download\n\
 \n\
-https://github.com/frimin/lyric-dl\
+GET MORE : https://github.com/frimin/lyric-dl\
 ")
     phantom.exit(0)
 }
@@ -97,11 +111,71 @@ handler.url = function (opt) {
     })
 }
 
+function parseGET(url){
+	var query = url.substr(url.indexOf("?")+1);
+	var result = {};
+	query.split("&").forEach(function(part) {
+		var e = part.indexOf("=")
+		var key = part.substr(0, e);
+		var value = part.substr(e+1);
+		result[key] = decodeURIComponent(value);
+	});
+	return result;
+}
+
+handler.server = function (opt) {
+    var server = require('webserver').create()
+
+    var port = parseInt(opt['p'] || opt['port'] || 8080)
+    var host = (opt['h'] || opt['host'] || '127.0.0.1') + ':' + port
+    
+    var service = server.listen(host, function(request, response) {
+		var query = parseGET(request.url)
+
+		function make_response(content) {
+			response.statusCode = 200;
+			response.setHeader('Content-Type', 'text/html; charset=utf-8');
+			response.write(content);
+			response.close();
+		}
+
+        var act = query['act']
+
+        switch(act)
+        {
+            case 'id':
+                var loader = loadersets[query['s']]
+                var song_id = query['id']
+
+                if (!loader || !song_id) {
+                    make_response(JSON.stringify(common.makeFailedData('invalid args')))
+                    return
+                }
+
+                loader.download(song_id, function (result) {
+                    make_response(JSON.stringify(result))
+                })
+
+                break
+            default:
+                make_response(JSON.stringify(common.makeFailedData()))
+                break
+        }
+	});
+
+	if (service) {
+		console.log('server started - http://' + host)
+	} else {
+		console.log('error: failed to start server, ' + host)
+        phantom.exit(2)
+	}
+}
+
 var args = minimist.parse(system.args)
 
 var cmd = args['_'][1]
 
-if (args['h'] || args['help']) {
+if (args['help']) {
     cmd = 'help'
 }
 
