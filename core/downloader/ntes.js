@@ -1,11 +1,18 @@
 var common = require(phantom.libraryPath + '/core/common.js')
 
-exports.download = function (id, response) {
-	var log = common.createLog('ntes', id)
+exports.downloadLyric = function (id, response) {
+	var log = common.createLog('ntes:lyric', id)
 	var url = 'http://music.163.com/#/m/song?id=' + id
 	log('open: ' + url)
 	var page = common.createPage(url, function(status) {
-		log('ok')
+		if (status != 'success') {
+			log('failed')
+			response(common.makeFailedData('failed to open page'))
+			return
+		} else {
+			log('ok')
+		}
+
 		page.onConsoleMessage = function(msg, lineNum, sourceId) {
 			try {
 				log('load lyrics finished, try read song info')
@@ -17,7 +24,7 @@ exports.download = function (id, response) {
 					var album_name = null
 					var album_id = null
 					var singer = [ ]
-
+					
 					for (var i=0; i!= c.length; ++i) {
 						if (c[i].getAttribute('data-res-name') != null) {
 							name = c[i].getAttribute('data-res-name')
@@ -68,7 +75,7 @@ exports.download = function (id, response) {
 				} else {
 					var data = JSON.parse(msg)
                     log('load lyrics succeed')
-					response(common.makeResponseData([
+					response(common.makeLyricResponseData([
 						song_info,
 						{
                             'source': 'ntes',
@@ -93,4 +100,98 @@ exports.download = function (id, response) {
 
 		page.evaluateJavaScript('(function(){var bd=NEJ.P,bI=bd("nej.ut"),bA=bd("nej.j"),bL=bd("nm.s"),bc,bO;bL.bnA=NEJ.C();bc=bL.bnA.bU(bI.fb);bc.cY=function(){this.df();var bZ="/api/song/lyric",cN={id:#ID#,lv:-1,tv:-1};this.EF=cN.id;bA.cG(bZ,{sync:false,type:"json",query:cN,method:"get",onload:this.bny.bi(this),onerror:this.bny.bi(this)})};bc.bny=function(be){console.log(JSON.stringify(be))};new bL.bnA})'.replace("#ID#", id))
 	})
+}
+
+function readSearchResult() {
+	var result = []
+
+	var c = window.contentFrame.document.getElementsByClassName('srchsongst')
+
+	if (c.length == 0) {
+		result = { 'err': 'not find element "srchsongst"' }
+	} else {
+		var c_song = c[0].getElementsByClassName('w0')
+		var c_singer = c[0].getElementsByClassName('w1')
+		var c_album = c[0].getElementsByClassName('w2')
+
+		if (c_song.length != c_singer.length || c_singer.length != c_album.length) {
+			result = { 'err': 'elements array length not match' }
+		} else {
+			for (var i = 0; i != c_song.length; ++i) {
+				// read song info
+				var song_href = c_song[i].getElementsByTagName("a")[0].href
+				var song_title = c_song[i].getElementsByTagName("b")[0].title
+
+				// read singers info
+				var singler = []
+
+				var child = c_singer[i].childNodes
+				
+				if (child.length == 1) {
+					var names = child[0].innerText.split('/')
+					var c_a = c_singer[i].getElementsByTagName("a")
+					var href_info = {}
+
+					for (var j = 0; j != c_a.length; ++j) {
+						href_info[c_a[j].text] = c_a[j].href
+					}
+
+					for (var j = 0; j != names.length; ++j) {
+						var name = names[j]
+
+						if (href_info[name]) {
+							singler.push({ "href": href_info[name], 'text': name })
+						} else {
+							singler.push({ "href": null, 'text': name })
+						}
+					}
+				}
+				
+				// read album info
+				var album = c_album[i].getElementsByTagName("a")[0]
+
+				result.push({ 
+					'href': song_href, 
+					'title': song_title, 
+					'singler': singler, 
+					'album_href': album.href, 
+					'album_title': album.title
+				})
+			}
+		}
+	}
+
+	return result
+}
+
+exports.search = function (name, response) {
+    var log = common.createLog('ntes:search', name)
+    var url = 'http://music.163.com/#/search/m/?type=1&s=' + name
+    url = encodeURI(url)
+	log('open: ' + url)
+
+	var page = common.createPage(url, function(status) {
+		page.onConsoleMessage = function(msg, lineNum, sourceId) {
+			console.log(msg, lineNum)
+		}
+        if (status != 'success') {
+			log('failed')
+			response(common.makeFailedData('failed to open page'))
+			return
+		} else {
+			log('ok, try read page elements')
+
+			// TODO : wait to read node "srchsongst"
+
+			var rt = page.evaluate(readSearchResult)
+
+			if (rt['err'] != null) {
+				log("failed : " + rt['err'])
+			} else {
+				log('search succeed')
+			}
+
+			response(common.makeSearchResponseData(rt))
+		}
+    })
 }

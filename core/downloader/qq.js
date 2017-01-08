@@ -1,11 +1,17 @@
 var common = require(phantom.libraryPath + '/core/common.js')
 
-exports.download = function download_qq(id, response) {
-	var log = common.createLog('qq', id)
+exports.downloadLyric = function (id, response) {
+	var log = common.createLog('qq:lyric', id)
 	var url = "https://y.qq.com/portal/song/" + id + '.html'
 	log('open: ' + url)
 	var page = common.createPage(url, function(status) {
-		log('ok')
+		if (status != 'success') {
+			log('failed')
+			response(common.makeFailedData('failed to open page'))
+			return
+		} else {
+			log('ok')
+		}
 
 		var g_SongData = page.evaluate(function(){
 			return window.g_SongData
@@ -99,7 +105,7 @@ exports.download = function download_qq(id, response) {
 						lrc = null
 					}
 
-					response(common.makeResponseData([ baseData, { 'lrc': lrc, 'tlrc': tlrc } ]))
+					response(common.makeLyricResponseData([ baseData, { 'lrc': lrc, 'tlrc': tlrc } ]))
 					setTimeout(function(){
 						player_page.close();
 					}, 100)

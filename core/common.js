@@ -54,7 +54,7 @@ exports.makeFailedData = function(text) {
 	return { 'code': 400, 'err': text || "failed to request" }
 }
 
-exports.makeResponseData = function(dataList) {
+exports.makeLyricResponseData = function(dataList) {
 	var merge = {}
 
 	for (var i in dataList) {
@@ -84,7 +84,20 @@ exports.makeResponseData = function(dataList) {
 	rt['nolyric'] = merge['nolyric'] || (!rt['lrc'] && true || false)
 
 	if (!rt['id'] || !['name'] || !['album_name']) {
-		return makeFailedData('missing base data')
+		return exports.makeFailedData('missing base data')
+	}
+
+	return rt
+}
+
+exports.makeSearchResponseData = function(searchResult) {
+	if (searchResult['err']) {
+		return exports.makeFailedData(searchResult['err'])
+	}
+
+	var rt = {
+		'result' : searchResult,
+		'code': 200,
 	}
 
 	return rt

@@ -40,7 +40,7 @@ function download(opt, url, response) {
         console.log("invalid url")
         phantom.exit(2)
     } else {
-        loader.download(song_id, response)
+        loader.downloadLyric(song_id, response)
     }
 }
 
@@ -77,12 +77,12 @@ GET MORE : https://github.com/frimin/lyric-dl\
 }
 
 handler.url = function (opt) {
-    if (args['_'].length < 3) {
+    if (opt['_'].length < 3) {
         console.log("nothing to do")
         phantom.exit(2)
     }
 
-    download(opt, args['_'][2], function(result) {
+    download(opt, opt['_'][2], function(result) {
         var outformat = opt['O'] || opt['out-format'] || 'lrc'
 
         switch (outformat)
@@ -110,6 +110,21 @@ handler.url = function (opt) {
         phantom.exit(0)
     })
 }
+
+handler.search = function (opt) {
+    if (opt['_'].length < 3) {
+        console.log("nothing to do")
+        phantom.exit(2)
+    }
+
+    var name = opt['_'][2]
+    var loader = loadersets['ntes']
+
+    loader.search(name, function(result) { 
+        console.log(JSON.stringify(result))
+        phantom.exit(0)
+    })
+} 
 
 function parseGET(url){
 	var query = url.substr(url.indexOf("?")+1);
@@ -152,7 +167,7 @@ handler.server = function (opt) {
                     return
                 }
 
-                loader.download(song_id, function (result) {
+                loader.downloadLyric(song_id, function (result) {
                     make_response(JSON.stringify(result))
                 })
 
@@ -161,7 +176,7 @@ handler.server = function (opt) {
                 make_response(JSON.stringify(common.makeFailedData()))
                 break
         }
-	});
+	})
 
 	if (service) {
 		console.log('server started - http://' + host)

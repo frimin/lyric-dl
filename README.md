@@ -1,8 +1,8 @@
 # lyric-dl
 
-命令行中下载在线歌词的工具
+命令行中下载 网易云音乐 / qq音乐的歌词工具
 
-# INSTALLATION
+# 安装
 
 对于 UNIX 用户 (Linux, OS X, 其他):
 
@@ -12,7 +12,7 @@
 
 	$ npm install phantomjs -g
 	
-# USAGE
+# 使用
 
 在使用脚本之前先为其添加可执行权限
 
