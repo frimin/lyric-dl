@@ -36,11 +36,19 @@ exports.ViewError = function (b) {
 }
 
 var requestCount = 0
+var logVisible = true
 
 exports.createLog = function (source, id) {
 	requestCount += 1
 	var count = requestCount
-	return function(message) { console.log("#" + requestCount +  " [" + source + " - " + id + "] " + message) }
+	return function(message) { 
+        if (logVisible)
+            console.log("#" + requestCount +  " [" + source + " - " + id + "] " + message) 
+    }
+}
+
+exports.setLogVisible = function (b) {
+	logVisible = b
 }
 
 exports.errorExit = function(text, code) {
@@ -96,7 +104,7 @@ exports.makeSearchResponseData = function(searchResult) {
 	}
 
 	var rt = {
-		'result' : searchResult,
+		'search' : searchResult,
 		'code': 200,
 	}
 

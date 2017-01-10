@@ -140,9 +140,9 @@ function readSearchResult() {
                         var name = names[j]
 
                         if (href_info[name]) {
-                            singler.push({ "href": href_info[name], 'text': name })
+                            singler.push({ "href": href_info[name], 'name': name })
                         } else {
-                            singler.push({ "href": null, 'text': name })
+                            singler.push({ "href": null, 'name': name })
                         }
                     }
                 }
@@ -181,17 +181,49 @@ exports.search = function (name, response) {
         } else {
             log('ok, try read page elements')
 
-            // TODO : wait to read node "srchsongst"
+            var timeusage = 0
 
-            var rt = page.evaluate(readSearchResult)
+            function tryReadSearchResult() {
+                if (timeusage > 5000) {
+					log('load result timeout')
+					response(common.makeFailedData('load result timeout'))
+                    setTimeout(function(){
+						page.close();
+					}, 100)
+					return
+				}
 
-            if (rt['err'] != null) {
-                log("failed : " + rt['err'])
-            } else {
-                log('search succeed')
-            }
+                var exists = page.evaluate(function() {
+                    var c = window.contentFrame.document.getElementsByClassName('srchsongst')
+                    var rt = null
+                    if (c.length == 1) { 
+                        rt = true 
+                    } else { 
+                        rt = false
+                    }
+                    return rt
+                })
 
-            response(common.makeSearchResponseData(rt))
+                if (exists) {
+                    var rt = page.evaluate(readSearchResult)
+
+                    if (rt['err'] != null) {
+                        log("failed : " + rt['err'])
+                    } else {
+                        log('search succeed')
+                    }
+
+                    response(common.makeSearchResponseData(rt))
+                    setTimeout(function(){
+						page.close();
+					}, 100)
+                } else {
+                    timeusage += 100
+                    setTimeout(tryReadSearchResult, 100)
+                }
+			}
+
+			tryReadSearchResult()
         }
     })
 }
