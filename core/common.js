@@ -110,3 +110,12 @@ exports.makeSearchResponseData = function(searchResult) {
 
 	return rt
 }
+
+var loadersets = {
+    'ntes': require(phantom.libraryPath + '/core/downloader/ntes.js'),
+    'qq': require(phantom.libraryPath + '/core/downloader/qq.js'),
+}
+
+exports.getLoader = function(name) {
+    return loadersets[name]
+}

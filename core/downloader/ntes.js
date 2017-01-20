@@ -185,12 +185,12 @@ exports.search = function (name, response) {
 
             function tryReadSearchResult() {
                 if (timeusage > 5000) {
-					log('load result timeout')
-					response(common.makeFailedData('load result timeout'))
+                    log('load result timeout')
+                    response(common.makeFailedData('load result timeout'))
                     setTimeout(function(){
-						page.close();
-					}, 100)
-					return
+                        page.close();
+                    }, 100)
+                    return
 				}
 
                 var exists = page.evaluate(function() {
@@ -223,7 +223,7 @@ exports.search = function (name, response) {
                 }
 			}
 
-			tryReadSearchResult()
+            tryReadSearchResult()
         }
     })
 }

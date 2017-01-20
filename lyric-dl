@@ -10,43 +10,15 @@ var loadersets = {
     'qq': require(phantom.libraryPath + '/core/downloader/qq.js'),
 }
 
-function download(opt, url, response) {
-    var loader = null
-    var song_id = null
+var commands_list = [ 'url', 'server', 'search' ]
+var commands = {}
 
-    if (url.indexOf('http://music.163.com/#/m/song?id=') != -1 || url.indexOf('http://music.163.com/song?id=') != -1) {
-        var m = url.match(/id=(\d+)/)
-
-        if (!m || m.length != 2) {
-            console.log("invalid url")
-            phantom.exit(2)
-        } else {
-            loader = loadersets['ntes']
-            song_id = m[1]
-        }
-    } else if (url.indexOf('https://y.qq.com/portal/song/') != -1) {
-        var m = url.match(/song\/(\w+)\.html/)
-
-        if (!m || m.length != 2) {
-            console.log("invalid url")
-            phantom.exit(2)
-        } else {
-            loader = loadersets['qq']
-            song_id = m[1]
-        }
-    }
-
-    if (loader == null || song_id == null) {
-        console.log("invalid url")
-        phantom.exit(2)
-    } else {
-        loader.downloadLyric(song_id, response)
-    }
+for (var i in commands_list) {
+    var name = commands_list[i]
+    commands[name] = require(phantom.libraryPath + '/command/' + name + '.js').handler
 }
 
-var handler = {}
-
-handler.help = function (opt) {
+commands.help = function (opt) {
     console.log("\
 Usage: lyric-dl [cmd [arg [arg ...]]] [OPTIONS]\n\
 \n\
@@ -93,157 +65,6 @@ GET MORE : https://github.com/frimin/lyric-dl\
     phantom.exit(0)
 }
 
-handler.url = function (opt) {
-    if (opt['_'].length < 3) {
-        console.log("nothing to do")
-        phantom.exit(2)
-    }
-
-    download(opt, opt['_'][2], function(result) {
-        var outformat = opt['O'] || opt['out-format'] || 'lrc'
-
-        switch (outformat)
-        {
-            case 'lrc':
-                var outfile = opt['o'] || opt['output'] || result['name']
-
-                if (result['lrc'])
-                    fs.write(outfile, result['lrc'], 'w')
-
-                if (result['tlrc'])
-                    fs.write(outfile + '.tr', result['tlrc'], 'w')
-                break
-            case 'json':
-                var outfile = opt['o'] || opt['output'] || (result['name'] + '.json')
-                
-                fs.write(outfile, JSON.stringify(result), 'w')
-                break
-            default:
-                console.log("invalid out format: " + outformat)
-                phantom.exit(2)
-                break
-        }
-        
-        phantom.exit(0)
-    })
-}
-
-handler.search = function (opt) {
-    if (opt['_'].length < 3) {
-        console.log("nothing to do")
-        phantom.exit(2)
-    }
-
-    var name = opt['_'][2]
-    var loader = loadersets['ntes']
-
-    loader.search(name, function(result) {
-        if (result['code'] != 200) {
-            console.error(result['err'])
-            phantom.exit(1)
-        } else {
-            //console.log(JSON.stringify(result['search']))
-            var list = result['search']
-            var separator = opt['separator'] || ' '
-
-            for (var i = 0; i != list.length; i++) {
-                var item = list[i]
-                var line = []
-
-                if (opt['a'] || opt['all'] || opt['i'] || opt['index']) {
-                    line.push(i.toString())
-                }
-
-                if (opt['a'] || opt['all'] || opt['u'] || opt['url']) {
-                    line.push(item.href)
-                }
-
-                if (opt['a'] || opt['all'] || opt['t'] || opt['title']) {
-                    line.push(item.title)
-                }
-
-                if (opt['a'] || opt['all'] || opt['s'] || opt['singler']) {
-                    var names = []
-                    
-                    for (var j = 0; j != item.singler.length; ++j) {
-                        names.push(item.singler[j].name)
-                    }
-
-                    line.push(names.join('/'))
-                }
-
-                if (opt['a'] || opt['all'] || opt['b'] || opt['album']) {
-                    line.push(names.join(item.album_title))
-                }
-
-                if (line.length > 0)
-                    console.log(line.join(separator))
-            }
-
-            phantom.exit(0)
-        }
-    })
-} 
-
-function parseGET(url){
-	var query = url.substr(url.indexOf("?")+1);
-	var result = {};
-	query.split("&").forEach(function(part) {
-		var e = part.indexOf("=")
-		var key = part.substr(0, e);
-		var value = part.substr(e+1);
-		result[key] = decodeURIComponent(value);
-	});
-	return result;
-}
-
-handler.server = function (opt) {
-    var server = require('webserver').create()
-
-    var port = parseInt(opt['p'] || opt['port'] || 8080)
-    var host = (opt['h'] || opt['host'] || '127.0.0.1') + ':' + port
-    
-    var service = server.listen(host, function(request, response) {
-		var query = parseGET(request.url)
-
-		function make_response(content) {
-			response.statusCode = 200;
-			response.setHeader('Content-Type', 'text/html; charset=utf-8');
-			response.write(content);
-			response.close();
-		}
-
-        var act = query['act']
-
-        switch(act)
-        {
-            case 'id':
-                var loader = loadersets[query['s']]
-                var song_id = query['id']
-
-                if (!loader || !song_id) {
-                    make_response(JSON.stringify(common.makeFailedData('invalid args')))
-                    return
-                }
-
-                loader.downloadLyric(song_id, function (result) {
-                    make_response(JSON.stringify(result))
-                })
-
-                break
-            default:
-                make_response(JSON.stringify(common.makeFailedData()))
-                break
-        }
-	})
-
-	if (service) {
-		console.log('server started - http://' + host)
-	} else {
-		console.log('error: failed to start server, ' + host)
-        phantom.exit(2)
-	}
-}
 
 var args = minimist.parse(system.args)
 
@@ -264,7 +85,7 @@ if (cmd != 'help' && args['_'].length < 2) {
     phantom.exit(2)
 }
 
-var f = handler[cmd]
+var f = commands[cmd]
 
 if (f) {
     f(args)
