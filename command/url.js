@@ -1,6 +1,7 @@
+var system = require('system')
 var common = require(phantom.libraryPath + '/core/common.js')
 
-function download(opt, url, response) {
+function parseUrl(url) {
     var loader = null
     var song_id = null
 
@@ -9,7 +10,7 @@ function download(opt, url, response) {
 
         if (!m || m.length != 2) {
             console.log("invalid url")
-            phantom.exit(2)
+            return false
         } else {
             loader = common.getLoader('ntes')
             song_id = m[1]
@@ -19,7 +20,7 @@ function download(opt, url, response) {
 
         if (!m || m.length != 2) {
             console.log("invalid url")
-            phantom.exit(2)
+            return false
         } else {
             loader = common.getLoader('qq')
             song_id = m[1]
@@ -28,43 +29,115 @@ function download(opt, url, response) {
 
     if (loader == null || song_id == null) {
         console.log("invalid url")
-        phantom.exit(2)
+        return false
     } else {
-        loader.downloadLyric(song_id, response)
+        return { 'loader': loader, 'id': song_id }
+    }
+}
+
+function createDownloadTask(opt, url, downloaded) {
+    return function (done) {
+        var rt = parseUrl(url)
+
+        if (!rt) {
+            return done(false)
+        }
+
+        if (downloaded[rt['id']]) {
+            return done(true) // skip current url
+        }
+
+        var loger = common.createLog('download', rt['id'])
+
+        rt['loader'].downloadLyric(loger, rt['id'], function (result) {
+            downloaded[rt['id']] = true
+
+            var outformat = opt['O'] || opt['out-format'] || 'lrc'
+            var outdir = opt['d'] || opt['directory'] || ''
+
+            if ((outdir.length > 0) && (outdir.charAt(outdir.length - 1) != '/')) {
+                outdir = outdir + '/'
+            }
+
+            switch (outformat)
+            {
+                case 'lrc':
+                    var outfile = outdir + (opt['o'] || opt['output'] || result['name'] + ' (' + rt['id'] + ')')
+
+                    var wrote = false
+
+                    if (result['lrc']) {
+                        fs.write(outfile, result['lrc'], 'w')
+                        loger('write to file: ' + outfile)
+                        wrote = true
+                    }
+
+                    if (result['tlrc']) {
+                        fs.write(outfile + '.tr', result['tlrc'], 'w')
+                        loger('write to file: ' + outfile + '.tr')
+                        wrote = true
+                    }
+
+                    if (!wrote) {
+                        loger('no content to write')
+                    }
+
+                    break
+                case 'json':
+                    var outfile = outdir + (opt['o'] || opt['output'] || (result['name'] + ' (' + rt['id'] + ')' + '.json'))
+                    loger('write to file: ' + outfile)
+                    fs.write(outfile, JSON.stringify(result), 'w')
+                    break
+                default:
+                    console.log("invalid out format: " + outformat)
+                    break
+            }
+
+            done(true)
+        })
     }
 }
 
 exports.handler = function (opt) {
-    if (opt['_'].length < 3) {
-        console.log("nothing to do")
-        phantom.exit(2)
+    var urlList = []
+    
+    for (var i in opt['_']) {
+        if (i <= 1)
+            continue
+        urlList.push(opt['_'][i])
     }
 
-    download(opt, opt['_'][2], function(result) {
-        var outformat = opt['O'] || opt['out-format'] || 'lrc'
-
-        switch (outformat)
-        {
-            case 'lrc':
-                var outfile = opt['o'] || opt['output'] || result['name']
-
-                if (result['lrc'])
-                    fs.write(outfile, result['lrc'], 'w')
-
-                if (result['tlrc'])
-                    fs.write(outfile + '.tr', result['tlrc'], 'w')
-                break
-            case 'json':
-                var outfile = opt['o'] || opt['output'] || (result['name'] + '.json')
-                
-                fs.write(outfile, JSON.stringify(result), 'w')
-                break
-            default:
-                console.log("invalid out format: " + outformat)
-                phantom.exit(2)
-                break
-        }
+    // url list from stdin
+    if (urlList.length == 1 && urlList[0] == '-') {
+        var content = system.stdin.read()
+        content = content.split('\n')
+        urlList = []
         
-        phantom.exit(0)
+        for (var i in content) {
+            var url = content[i].trim()
+            if (url.length > 0)
+                urlList.push(url)
+        }
+    }
+
+    if (urlList.length == 0) {
+        console.log("nothing to do")
+        return phantom.exit(2)
+    }
+    
+    var downloadTasks = []
+    var downloaded = {}
+    
+    for (var i in urlList) {
+        downloadTasks.push(createDownloadTask(opt, urlList[i], downloaded))
+    }
+
+    common.async.series(downloadTasks, function (succeed) {
+        if (succeed) {
+            phantom.exit(0)
+        } else {
+            console.log('abort')
+            phantom.exit(2)
+        }
     })
 }

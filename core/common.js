@@ -1,4 +1,6 @@
-var viewError = false
+var viewError = true
+
+exports.async = require(phantom.libraryPath + '/core/async.js')
 
 exports.createPage = function (url, callback, page) {
 	if (page == null) {
@@ -35,7 +37,7 @@ exports.ViewError = function (b) {
 	viewError = b
 }
 
-var requestCount = 0
+var requestCount = -1
 var logVisible = true
 
 exports.createLog = function (source, id) {
