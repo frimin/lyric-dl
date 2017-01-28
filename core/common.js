@@ -1,6 +1,6 @@
 var viewError = true
 
-exports.async = require(phantom.libraryPath + '/core/async.js')
+exports.async = load('/core/async.js')
 
 exports.createPage = function (url, callback, page) {
 	if (page == null) {
@@ -40,12 +40,20 @@ exports.ViewError = function (b) {
 var requestCount = -1
 var logVisible = true
 
-exports.createLog = function (source, id) {
-	requestCount += 1
+exports.createLog = function (name, id) {
+    if (id)
+	    requestCount += 1
+
 	var count = requestCount
+
 	return function(message) { 
-        if (logVisible)
-            console.log("#" + requestCount +  " [" + source + " - " + id + "] " + message) 
+        if (logVisible) {
+            if (id) {
+                console.log("#" + requestCount +  " [" + name + " - " + id + "] " + message) 
+            } else {
+                console.log("## [" + name + "] " + message) 
+            }
+        }
     }
 }
 
@@ -113,11 +121,11 @@ exports.makeSearchResponseData = function(searchResult) {
 	return rt
 }
 
-var loadersets = {
+var loader = {
     'ntes': require(phantom.libraryPath + '/core/downloader/ntes.js'),
     'qq': require(phantom.libraryPath + '/core/downloader/qq.js'),
 }
 
 exports.getLoader = function(name) {
-    return loadersets[name]
+    return loader[name]
 }

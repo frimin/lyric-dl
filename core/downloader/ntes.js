@@ -1,4 +1,4 @@
-var common = require(phantom.libraryPath + '/core/common.js')
+// ntes.js
 
 function loadLyric(id, page, done) {
     page.onConsoleMessage = function (msg, lineNum, sourceId) {
@@ -195,8 +195,8 @@ function loadSearchResult() {
     return result
 }
 
-exports.search = function (name, response) {
-    var log = common.createLog('ntes:search', name)
+exports.search = function (log, name, response) {
+    log = log || common.createLog('ntes:search', name)
     var url = 'http://music.163.com/#/search/m/?type=1&s=' + name
     url = encodeURI(url)
     log('open: ' + url)
@@ -218,20 +218,23 @@ exports.search = function (name, response) {
             common.async.waitFor({
                 'check': function() {
                     return page.evaluate(function() {
-                        var c = window.contentFrame.document.getElementsByClassName('srchsongst')
-                        var rt = null
-                        if (c.length == 1) { 
-                            rt = true 
-                        } else { 
-                            rt = false
-                        }
-                        return rt
+                        var c1 = window.contentFrame.document.getElementsByClassName('srchsongst')
+                        var c2 = window.contentFrame.document.getElementsByClassName('n-nmusic')
+                        return c1.length >= 1 || c2.length >= 1
                     })
                 },
                 'timeout': function() {
                     done(false, page, 'load result timeout')  
                 },
                 'done': function() {
+                    var noResult = page.evaluate(function() {
+                        var c = window.contentFrame.document.getElementsByClassName('n-nmusic')
+                        return c.length >= 1
+                    })
+
+                    if (noResult)
+                        return done(false, page, 'failed : no search result')
+
                     var rt = page.evaluate(loadSearchResult)
 
                     if (rt['err'] != null) {

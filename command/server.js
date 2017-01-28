@@ -1,15 +1,62 @@
-var common = require(phantom.libraryPath + '/core/common.js')
+// server.js
 
 function parseGET(url){
-	var query = url.substr(url.indexOf("?")+1);
-	var result = {};
-	query.split("&").forEach(function(part) {
-		var e = part.indexOf("=")
-		var key = part.substr(0, e);
-		var value = part.substr(e+1);
-		result[key] = decodeURIComponent(value);
+    var result = {}
+
+    query = url
+
+    if (url.indexOf('?') != -1) {
+        query = url.substr(url.indexOf('?')+1)
+        result['_'] = url.substr(0, url.indexOf('?'))
+    } else {
+        result['_'] = url
+    }
+
+	query.split('&').forEach(function(part) {
+		var e = part.indexOf('=')
+		var key = part.substr(0, e)
+		var value = part.substr(e+1)
+		result[key] = decodeURIComponent(value)
 	});
+
 	return result;
+}
+
+var serverLog = common.createLog('server')
+
+var pathHandler = {}
+
+pathHandler['/api/url'] = function(args, response) {
+    if (!args['target']) {
+        return response(JSON.stringify(common.makeFailedData('invalid argument')))
+    }
+
+    var rt = commands.url.parseUrl(args['target'])
+
+    if (!rt) {
+        serverLog('invalid url : ' + args['target'])
+        return response(JSON.stringify(common.makeFailedData('invalid url')))
+    }
+
+    var log = common.createLog('api download', rt.id)
+
+    rt.loader.downloadLyric(log, rt.id, function (result) {
+        response(JSON.stringify(result))
+    })
+}
+
+pathHandler['/api/search'] = function(args, response) {
+    if (!args['target']) {
+        return response(JSON.stringify(common.makeFailedData('invalid argument')))
+    }
+
+    var loader = common.getLoader('ntes')
+
+    var log = common.createLog('api search', args['target'])
+
+    loader.search(log, args['target'], function (result) {
+        response(JSON.stringify(result))
+    })
 }
 
 exports.handler = function (opt) {
@@ -19,36 +66,47 @@ exports.handler = function (opt) {
     var host = (opt['h'] || opt['host'] || '127.0.0.1') + ':' + port
     
     var service = server.listen(host, function(request, response) {
-		var query = parseGET(request.url)
+        serverLog('request : ' + request.method + ' ' + decodeURIComponent(request.url) + ' postRaw:' + request.postRaw || '')
 
-		function make_response(content) {
+        if (request.method != 'POST') {
+            response.statusCode = 405
+            response.write("Method Not Allowed");
+            response.close()
+            return 
+        }
+
+		var args = parseGET(request.postRaw || '')
+        var path = request.url
+        
+        if (request.url.indexOf('?') != -1) {
+            path = request.url.substr(0, request.url.indexOf('?'))
+        }
+
+		function _response(content) { 
 			response.statusCode = 200;
 			response.setHeader('Content-Type', 'text/html; charset=utf-8');
 			response.write(content);
 			response.close();
 		}
 
-        var act = query['act']
+        var hander = pathHandler[path]
 
-        switch(act)
-        {
-            case 'id':
-                var loader = loadersets[query['s']]
-                var song_id = query['id']
+        if (!hander) {
+            serverLog('not found path : ' + path)
+            response.statusCode = 404
+            response.write("Not Found");
+            response.close()
+            return 
+        }
 
-                if (!loader || !song_id) {
-                    make_response(JSON.stringify(common.makeFailedData('invalid args')))
-                    return
-                }
-
-                loader.downloadLyric(song_id, function (result) {
-                    make_response(JSON.stringify(result))
-                })
-
-                break
-            default:
-                make_response(JSON.stringify(common.makeFailedData()))
-                break
+        try {
+            hander(args, _response)
+        } catch (e) {
+            serverLog(e)
+            response.statusCode = 500
+            response.write("Internal Server Error");
+            response.close()
+            return 
         }
 	})
 

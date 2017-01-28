@@ -1,5 +1,10 @@
 # HISTORY
 
+### 2017.1.28
+
+*  update http service
+*  bug fix
+
 ### 2017.1.21
 
 *	support download multi-url and receive urls form stdin in command line

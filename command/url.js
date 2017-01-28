@@ -1,5 +1,4 @@
-var system = require('system')
-var common = require(phantom.libraryPath + '/core/common.js')
+// url.js
 
 function parseUrl(url) {
     var loader = null
@@ -9,7 +8,6 @@ function parseUrl(url) {
         var m = url.match(/id=(\d+)/)
 
         if (!m || m.length != 2) {
-            console.log("invalid url")
             return false
         } else {
             loader = common.getLoader('ntes')
@@ -19,7 +17,6 @@ function parseUrl(url) {
         var m = url.match(/song\/(\w+)\.html/)
 
         if (!m || m.length != 2) {
-            console.log("invalid url")
             return false
         } else {
             loader = common.getLoader('qq')
@@ -28,18 +25,20 @@ function parseUrl(url) {
     }
 
     if (loader == null || song_id == null) {
-        console.log("invalid url")
         return false
     } else {
         return { 'loader': loader, 'id': song_id }
     }
 }
 
+exports.parseUrl = parseUrl
+
 function createDownloadTask(opt, url, downloaded) {
     return function (done) {
         var rt = parseUrl(url)
 
         if (!rt) {
+            console.log("invalid url")
             return done(false)
         }
 
@@ -47,10 +46,10 @@ function createDownloadTask(opt, url, downloaded) {
             return done(true) // skip current url
         }
 
-        var loger = common.createLog('download', rt['id'])
+        var log = common.createLog('download', rt.id)
 
-        rt['loader'].downloadLyric(loger, rt['id'], function (result) {
-            downloaded[rt['id']] = true
+        rt.loader.downloadLyric(log, rt.id, function (result) {
+            downloaded[rt.id] = true
 
             var outformat = opt['O'] || opt['out-format'] || 'lrc'
             var outdir = opt['d'] || opt['directory'] || ''
@@ -62,30 +61,30 @@ function createDownloadTask(opt, url, downloaded) {
             switch (outformat)
             {
                 case 'lrc':
-                    var outfile = outdir + (opt['o'] || opt['output'] || result['name'] + ' (' + rt['id'] + ')')
+                    var outfile = outdir + (opt['o'] || opt['output'] || result['name'] + ' (' + rt.id + ')')
 
                     var wrote = false
 
                     if (result['lrc']) {
                         fs.write(outfile, result['lrc'], 'w')
-                        loger('write to file: ' + outfile)
+                        log('write to file: ' + outfile)
                         wrote = true
                     }
 
                     if (result['tlrc']) {
                         fs.write(outfile + '.tr', result['tlrc'], 'w')
-                        loger('write to file: ' + outfile + '.tr')
+                        log('write to file: ' + outfile + '.tr')
                         wrote = true
                     }
 
                     if (!wrote) {
-                        loger('no content to write')
+                        log('no content to write')
                     }
 
                     break
                 case 'json':
-                    var outfile = outdir + (opt['o'] || opt['output'] || (result['name'] + ' (' + rt['id'] + ')' + '.json'))
-                    loger('write to file: ' + outfile)
+                    var outfile = outdir + (opt['o'] || opt['output'] || (result['name'] + ' (' + rt.id + ')' + '.json'))
+                    log('write to file: ' + outfile)
                     fs.write(outfile, JSON.stringify(result), 'w')
                     break
                 default:

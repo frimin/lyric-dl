@@ -1,13 +1,21 @@
 #!/usr/bin/env phantomjs
 
-var system = require('system')
-var fs = require('fs');
-var common = require(phantom.libraryPath + '/core/common.js')
-var minimist = require(phantom.libraryPath + '/core/minimist.js')
+function load(name) {
+    if (name.substr(0, 1) == '/') {
+        return require(phantom.libraryPath + name)
+    } else {
+        return require(name)
+    }
+}
 
-var loadersets = {
-    'ntes': require(phantom.libraryPath + '/core/downloader/ntes.js'),
-    'qq': require(phantom.libraryPath + '/core/downloader/qq.js'),
+var system = load('system')
+var fs = load('fs');
+var common = load('/core/common.js')
+var minimist = load('/core/minimist.js')
+
+var loader = {
+    'ntes': load('/core/downloader/ntes.js'),
+    'qq': load('/core/downloader/qq.js'),
 }
 
 var commands_list = [ 'url', 'server', 'search' ]
@@ -15,10 +23,11 @@ var commands = {}
 
 for (var i in commands_list) {
     var name = commands_list[i]
-    commands[name] = require(phantom.libraryPath + '/command/' + name + '.js').handler
+    commands[name] = require(phantom.libraryPath + '/command/' + name + '.js')
 }
 
-commands.help = function (opt) {
+
+commands.help = { 'handler' : function (opt) {
     console.log("\
 Usage: lyric-dl [cmd [arg [arg ...]]] [OPTIONS]\n\
 \n\
@@ -65,7 +74,7 @@ samples: lyric-dl url <URL> -o download\n\
 GET MORE : https://github.com/frimin/lyric-dl\
 ")
     phantom.exit(0)
-}
+}}
 
 
 var args = minimist.parse(system.args)
@@ -87,7 +96,7 @@ if (cmd != 'help' && args['_'].length < 2) {
     phantom.exit(2)
 }
 
-var f = commands[cmd]
+var f = commands[cmd].handler
 
 if (f) {
     f(args)

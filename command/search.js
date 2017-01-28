@@ -1,4 +1,4 @@
-var common = require(phantom.libraryPath + '/core/common.js')
+// search.js
 
 exports.handler = function (opt) {
     if (opt['_'].length < 3) {
@@ -9,10 +9,10 @@ exports.handler = function (opt) {
     var name = opt['_'][2]
     var loader = common.getLoader('ntes')
 
-    loader.search(name, function(result) {
+    loader.search(null, name, function(result) {
         if (result['code'] != 200) {
-            console.error(result['err'])
-            phantom.exit(1)
+            console.log(result['err'])
+            phantom.exit(2)
         } else {
             var list = result['search']
             var separator = opt['separator'] || ' '

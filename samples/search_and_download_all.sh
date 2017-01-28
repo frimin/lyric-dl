@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env sh
 
 if [[ -z "$1" ]]; then
     echo "no search name" >&2
@@ -17,5 +17,5 @@ if [[ ! -d samples/download ]]; then
     mkdir samples/download
 fi
 
-echo "$urllist" | ./lyric-dl url - -d samples/download -O json
+echo "$urllist" | ./lyric-dl url - -d samples/download
 
