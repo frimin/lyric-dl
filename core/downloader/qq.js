@@ -1,7 +1,6 @@
 var common = require(phantom.libraryPath + '/core/common.js')
 
-exports.downloadLyric = function (id, response) {
-	var log = common.createLog('qq:lyric', id)
+exports.downloadLyric = function (log, id, response) {
 	var url = "https://y.qq.com/portal/song/" + id + '.html'
 	log('open: ' + url)
 	var page = common.createPage(url, function(status) {
@@ -9,8 +8,6 @@ exports.downloadLyric = function (id, response) {
 			log('failed')
 			response(common.makeFailedData('failed to open page'))
 			return
-		} else {
-			log('ok')
 		}
 
 		var g_SongData = page.evaluate(function(){
@@ -58,8 +55,6 @@ exports.downloadLyric = function (id, response) {
 				log('failed')
 				response(common.makeFailedData('failed to open page'))
 				return
-			} else {
-				log('ok')
 			}
 			
 			var timeusage = 0
@@ -74,7 +69,6 @@ exports.downloadLyric = function (id, response) {
 
 				if (timeusage > 5000) {
 					log('load lyrics timeout')
-					player_page.render('player_falied_screenshot.png');
 					response(common.makeFailedData('load lyrics timeout'))
 					setTimeout(function(){
 						player_page.close();
@@ -99,7 +93,7 @@ exports.downloadLyric = function (id, response) {
 				}, id)
 
 				if (lrc) {
-					log('load lyrics succeed')
+					log('succeed')
 
 					if (lrc.indexOf('[00:00:00]此歌曲为没有') != -1) {
 						lrc = null
@@ -118,4 +112,140 @@ exports.downloadLyric = function (id, response) {
 			try_get_lyrics()
 		})
 	}, page)
+}
+
+function loadSearchResult() {
+    var result = []
+
+    var c = document.getElementsByClassName('mod_songlist')
+
+    if (c.length == 0) 
+        return { 'err': 'not find element "mod_songlist"' }
+
+    try {
+        var songlist = null
+
+        var child = c[0].children
+
+        for (var i = 0; i != child.length; i++) {
+            if (!songlist && child[i].className == 'songlist__list') {
+                songlist = child[i]
+            }
+        }
+        
+        if (!songlist)
+            return { 'err': 'not find element "songlist"' }
+
+        var lists = songlist.children
+
+        for (var i = 0; i != lists.length; i++) {
+            var song_info = { 'singler' : [] }
+
+            var item = lists[i].children[0]
+
+            if (!item) {
+                throw 'not found element "songlist__item", idx:' + i
+            }
+            
+            var propList = item.children // songlist__item
+
+            for (var j = 0; j != propList.length; j++) {
+                var prop = propList[j]
+                
+                if (prop.className.indexOf('songname') > 0) {
+                    var c_a = prop.getElementsByTagName('a')
+                    var a = c_a[0]
+
+                    if (!a || a.className != 'js_song')
+                        throw 'failed to read songname'
+
+                    song_info['href'] = a.href
+                    song_info['title'] = a.title
+                } else if (prop.className.indexOf('artist') > 0) {
+                    var c_a = prop.getElementsByTagName('a')
+
+                    for (var k = 0; k != c_a.length; k++) {
+                        if (c_a[k].className == 'singer_name') {
+                            song_info['singler'].push({ 'href': c_a[k].href, 'name': c_a[k].title })
+                        }
+                    }
+                } else if (prop.className.indexOf('album') > 0) {
+                    var c_a = prop.getElementsByTagName('a')
+                    var a = c_a[0]
+
+                    if (!a || a.className != 'album_name')
+                        throw 'failed to read album'
+
+                    song_info['album_href'] = a.href
+                    song_info['album_title'] = a.title
+                }
+            }
+
+            result.push(song_info)
+        }
+
+    } catch (e) {
+        return {'err': e}
+    }
+
+    return result
+}
+
+exports.search = function (log, name, response) {
+    var url = 'https://y.qq.com/portal/search.html#page=1&searchid=1&t=song&w=' + name
+    url = encodeURI(url)
+    log('open: ' + url)
+
+    common.async.series([
+        function (done) {
+            var page = common.createPage(url , function(status) {
+                if (status != 'success') {
+                    done(false, page, 'failed to open page')
+                } else {
+                    done(true, page)
+                }
+            })
+        },
+        
+        function (done, page) {
+            common.async.waitFor({
+                'check': function() {
+                    return page.evaluate(function() {
+                        return document.getElementsByClassName('mod_songlist').length > 0
+                        || document.getElementById('none_box').style['display'] == ''
+                    })
+                },
+                'timeout': function() {
+                    done(false, page, 'load result timeout')  
+                },
+                'done': function() {
+                    var noResult = page.evaluate(function() {
+                        return document.getElementById('none_box').style['display'] == ''
+                    })
+
+                    if (noResult)
+                        return done(false, page, 'failed : no search result')
+                        
+                    var rt = page.evaluate(loadSearchResult)
+                    
+                    if (rt['err'] != null) {
+                        done(false, page, 'failed : ' + rt['err'])
+                    } else {
+                        done(true, page, rt)
+                    }
+                }
+            })
+        },
+    ], function(succeed, page, result) {
+        if (succeed) {
+            log('succeed')
+            response(common.makeSearchResponseData(result))
+        } else {
+            response(common.makeFailedData(result))
+        }
+
+        setTimeout(function(){
+            page.close();
+        }, 100)
+    })
 }

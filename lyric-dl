@@ -18,64 +18,46 @@ var loader = {
     'qq': load('/core/downloader/qq.js'),
 }
 
-var commands_list = [ 'url', 'server', 'search' ]
+var commandsList = [ 'search', 'server', 'url', ]
 var commands = {}
 
-for (var i in commands_list) {
-    var name = commands_list[i]
+for (var i in commandsList) {
+    var name = commandsList[i]
     commands[name] = require(phantom.libraryPath + '/command/' + name + '.js')
 }
 
 
-commands.help = { 'handler' : function (opt) {
-    console.log("\
-Usage: lyric-dl [cmd [arg [arg ...]]] [OPTIONS]\n\
-\n\
+commands.help = { 
+    'handler' : function (opt) {
+        if (opt['_'].length > 2) {
+            var cmd = commands[opt['_'][2]]
+            if (!cmd) {
+                console.log('command "' + opt['_'][2] + '" not exists')
+                phantom.exit(2)
+            }
+            console.log(cmd.help)
+            console.log("\
 GLOBAL OPTIONS:\n\
     --g-quiet                   quiet mode\n\
-\n\
-command: url [url1 [url2 [...]]] - download lyric:\n\
-command: url - - form stdin  \n\
-\n\
-    SUPPORT URL: \n\
-    * ntes (cloudmusic) : http://music.163.com/#/m/song?id=<ID> \n\
-    * qq (qqmusic) : https://y.qq.com/portal/song/<ID>.html \n\
-\n\
-    OPTIONS: \n\
-    -o --output=<file>          name of output file, if translate lyric exists, named: <file>.tr\n\
-    -d --dir=<directory>        name of output directory\n\
-    -O --out-format=<format>    output file in given format: <format>=[lrc, json]\n\
-\n\
-command: search [search_name] - \n\
-\n\
-    SUPPORT SROUCE: \n\
-    * ntes \n\
-\n\
-    OPTIONS: \n\
-    -a --all                    print all information\n\
-    -i --index                  print index\n\
-    -u --url                    print url\n\
-    -t --title                  print title\n\
-    -s --singler                print singler\n\
-    -b --album                  print album\n\
-    --separator=<string>        set separator string (default: <space>)\n\
-\n\
-command: server - launch http service:\n\
-\n\
-    SUPPORT ACTION: \n\
-    * id : request lyric info - http://localhost:8080/?act=id&id=<song_id>&s=<source_type> \n\
-\n\
-    OPTIONS: \n\
-    -h --host=<host>            bind address (default: 127.0.0.1)\n\
-    -p --port=<format>          bind port (default: 8080)\n\
-\n\
-samples: lyric-dl url <URL> -o download\n\
-\n\
-GET MORE : https://github.com/frimin/lyric-dl\
 ")
-    phantom.exit(0)
-}}
-
+        } else {
+            console.log("\
+Usage: lyric-dl [command [arg [arg ...]]] [OPTIONS]\n\
+\n\
+Type 'lyric-dl help <command>' for help on a specific command.\n\
+\n\
+Available commands:")
+            for (var i = 0; i != commandsList.length; i++) {
+                console.log('   ' + commandsList[i])
+            }
+            console.log("\n\
+GET MORE : https://github.com/frimin/lyric-dl\
+    ")
+        }
+        phantom.exit(0)
+    },
+    "help": "usage:  help <command>\n",
+}
 
 var args = minimist.parse(system.args)
 

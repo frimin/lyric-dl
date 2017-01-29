@@ -1,5 +1,19 @@
 // server.js
 
+exports.help = "\
+usage:  server\n\
+\n\
+    launch http service\n\
+\n\
+SUPPORT PATH: \n\
+    /api/search                 post data: target=<name>&from=<searchfrom> \n\
+    /api/url                    post data: target=<url> \n\
+\n\
+OPTIONS: \n\
+    -h --host=<host>            bind address (default: 127.0.0.1)\n\
+    -p --port=<format>          bind port (default: 8080)\n\
+"
+
 function parseGET(url){
     var result = {}
 
@@ -50,7 +64,12 @@ pathHandler['/api/search'] = function(args, response) {
         return response(JSON.stringify(common.makeFailedData('invalid argument')))
     }
 
-    var loader = common.getLoader('ntes')
+    var loader = common.getLoader(args['from'] || 'ntes')
+
+    if (!loader) {
+        serverLog('invalid source : ' + args['from'])
+        return response(JSON.stringify(common.makeFailedData('invalid source')))
+    }
 
     var log = common.createLog('api search', args['target'])
 

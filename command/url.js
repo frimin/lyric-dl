@@ -1,5 +1,21 @@
 // url.js
 
+exports.help = "\
+usage:  url <url1 [url2 [...]]>\n\
+        url - (form stdin)  \n\
+\n\
+    download lyric\n\
+\n\
+SUPPORT URL: \n\
+    * ntes (cloudmusic) : http://music.163.com/#/m/song?id=<ID> \n\
+    * qq (qqmusic) : https://y.qq.com/portal/song/<ID>.html \n\
+\n\
+OPTIONS: \n\
+    -o --output=<file>          name of output file, if translate lyric exists, named: <file>.tr\n\
+    -d --dir=<directory>        name of output directory\n\
+    -O --out-format=<format>    output file in given format: <format>=[lrc, json]\n\
+"
+
 function parseUrl(url) {
     var loader = null
     var song_id = null
@@ -37,16 +53,16 @@ function createDownloadTask(opt, url, downloaded) {
     return function (done) {
         var rt = parseUrl(url)
 
+        var log = common.createLog('download', rt.id)
+
         if (!rt) {
-            console.log("invalid url")
+            log("invalid url")
             return done(false)
         }
 
         if (downloaded[rt['id']]) {
             return done(true) // skip current url
         }
-
-        var log = common.createLog('download', rt.id)
 
         rt.loader.downloadLyric(log, rt.id, function (result) {
             downloaded[rt.id] = true

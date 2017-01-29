@@ -95,8 +95,6 @@ exports.downloadLyric = function (log, id, response) {
             })
         },
         function (done, page) {
-            log('try load lyrics')
-
             common.async.waitFor({
                 'check': function() {
                     return page.evaluate(function() {
@@ -123,7 +121,6 @@ exports.downloadLyric = function (log, id, response) {
             log('succeed')
             response(common.makeLyricResponseData(result))
         } else {
-            log(result)
             response(common.makeFailedData(result))
         }
 
@@ -136,67 +133,70 @@ exports.downloadLyric = function (log, id, response) {
 function loadSearchResult() {
     var result = []
 
-    var c = window.contentFrame.document.getElementsByClassName('srchsongst')
+    try {
+        var c = window.contentFrame.document.getElementsByClassName('srchsongst')
 
-    if (c.length == 0) {
-        result = { 'err': 'not find element "srchsongst"' }
-    } else {
-        var c_song = c[0].getElementsByClassName('w0')
-        var c_singer = c[0].getElementsByClassName('w1')
-        var c_album = c[0].getElementsByClassName('w2')
-
-        if (c_song.length != c_singer.length || c_singer.length != c_album.length) {
-            result = { 'err': 'elements array length not match' }
+        if (c.length == 0) {
+            result = { 'err': 'not find element "srchsongst"' }
         } else {
-            for (var i = 0; i != c_song.length; ++i) {
-                // read song info
-                var song_href = c_song[i].getElementsByTagName("a")[0].href
-                var song_title = c_song[i].getElementsByTagName("b")[0].title
+            var c_song = c[0].getElementsByClassName('w0')
+            var c_singer = c[0].getElementsByClassName('w1')
+            var c_album = c[0].getElementsByClassName('w2')
 
-                // read singers info
-                var singler = []
+            if (c_song.length != c_singer.length || c_singer.length != c_album.length) {
+                result = { 'err': 'elements array length not match' }
+            } else {
+                for (var i = 0; i != c_song.length; ++i) {
+                    // read song info
+                    var song_href = c_song[i].getElementsByTagName("a")[0].href
+                    var song_title = c_song[i].getElementsByTagName("b")[0].title
 
-                var child = c_singer[i].childNodes
-                
-                if (child.length == 1) {
-                    var names = child[0].innerText.split('/')
-                    var c_a = c_singer[i].getElementsByTagName("a")
-                    var href_info = {}
+                    // read singers info
+                    var singler = []
 
-                    for (var j = 0; j != c_a.length; ++j) {
-                        href_info[c_a[j].text] = c_a[j].href
-                    }
+                    var child = c_singer[i].childNodes
+                    
+                    if (child.length == 1) {
+                        var names = child[0].innerText.split('/')
+                        var c_a = c_singer[i].getElementsByTagName("a")
+                        var href_info = {}
 
-                    for (var j = 0; j != names.length; ++j) {
-                        var name = names[j]
+                        for (var j = 0; j != c_a.length; ++j) {
+                            href_info[c_a[j].text] = c_a[j].href
+                        }
 
-                        if (href_info[name]) {
-                            singler.push({ "href": href_info[name], 'name': name })
-                        } else {
-                            singler.push({ "href": null, 'name': name })
+                        for (var j = 0; j != names.length; ++j) {
+                            var name = names[j]
+
+                            if (href_info[name]) {
+                                singler.push({ "href": href_info[name], 'name': name })
+                            } else {
+                                singler.push({ "href": null, 'name': name })
+                            }
                         }
                     }
-                }
-                
-                // read album info
-                var album = c_album[i].getElementsByTagName("a")[0]
+                    
+                    // read album info
+                    var album = c_album[i].getElementsByTagName("a")[0]
 
-                result.push({ 
-                    'href': song_href, 
-                    'title': song_title, 
-                    'singler': singler, 
-                    'album_href': album.href, 
-                    'album_title': album.title
-                })
+                    result.push({ 
+                        'href': song_href, 
+                        'title': song_title, 
+                        'singler': singler, 
+                        'album_href': album.href, 
+                        'album_title': album.title
+                    })
+                }
             }
-        }
+        } 
+    } catch (e) {
+        return {'err': e}
     }
 
     return result
 }
 
 exports.search = function (log, name, response) {
-    log = log || common.createLog('ntes:search', name)
     var url = 'http://music.163.com/#/search/m/?type=1&s=' + name
     url = encodeURI(url)
     log('open: ' + url)
@@ -213,14 +213,12 @@ exports.search = function (log, name, response) {
         },
         
         function (done, page) {
-            log('try load search result')
-
             common.async.waitFor({
                 'check': function() {
                     return page.evaluate(function() {
                         var c1 = window.contentFrame.document.getElementsByClassName('srchsongst')
                         var c2 = window.contentFrame.document.getElementsByClassName('n-nmusic')
-                        return c1.length >= 1 || c2.length >= 1
+                        return c1.length > 0 || c2.length > 0
                     })
                 },
                 'timeout': function() {
@@ -229,7 +227,7 @@ exports.search = function (log, name, response) {
                 'done': function() {
                     var noResult = page.evaluate(function() {
                         var c = window.contentFrame.document.getElementsByClassName('n-nmusic')
-                        return c.length >= 1
+                        return c.length > 0
                     })
 
                     if (noResult)
@@ -250,7 +248,6 @@ exports.search = function (log, name, response) {
             log('succeed')
             response(common.makeSearchResponseData(result))
         } else {
-            log(result)
             response(common.makeFailedData(result))
         }
 

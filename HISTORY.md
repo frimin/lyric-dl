@@ -1,5 +1,10 @@
 # HISTORY
 
+### 2017.1.29
+
+*	support search from qq music
+* 	some code refactoring
+
 ### 2017.1.28
 
 *  update http service

@@ -25,11 +25,19 @@ function test_end() {
     fi
 }
 
-test_start "search"
-lyric-dl search $search_name --url --g-quiet > samples/download/search_result
+test_start "search from ntes"
+lyric-dl search $search_name -f ntes --url --output samples/download/search_result_ntes
 test_end
 
 test_start "download search results"
-cat samples/download/search_result | lyric-dl url - -d samples/download
+cat samples/download/search_result_ntes | sed 1q | lyric-dl url - -d samples/download
+test_end
+
+test_start "search from qq"
+lyric-dl search $search_name -f qq --url --output samples/download/search_result_qq
+test_end
+
+test_start "download search results"
+cat samples/download/search_result_qq | sed 1q | lyric-dl url - -d samples/download
 test_end
 

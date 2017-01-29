@@ -5,5 +5,11 @@ if [[ -z "$1" ]]; then
     exit 2
 fi
 
-curl --data-urlencode "target=$1" "http://localhost:8080/api/search" 
+if [[ -z "$2" ]]; then
+    from="ntes"
+else
+    from=$2
+fi
+
+curl --data-urlencode "target=$1" --data-urlencode "from=$from" "http://localhost:8080/api/search" 
 

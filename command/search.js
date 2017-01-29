@@ -1,4 +1,24 @@
 // search.js
+var fs = load('fs')
+
+exports.help = "\
+usage:  search <name> \n\
+\n\
+SUPPORT SROUCE: \n\
+    * ntes \n\
+    * qq \n\
+\n\
+OPTIONS: \n\
+    -a --all                    print all information\n\
+    -i --index                  print index\n\
+    -u --url                    print url\n\
+    -t --title                  print title\n\
+    -s --singler                print singler\n\
+    -b --album                  print album\n\
+    -f --from=<srouce>          search from source (default: ntes) \n\
+    -o --output=<file>          name of results output file, default output to stdout \n\
+    --separator=<string>        set separator string (default: <space>)\n\
+"
 
 exports.handler = function (opt) {
     if (opt['_'].length < 3) {
@@ -7,15 +27,33 @@ exports.handler = function (opt) {
     }
 
     var name = opt['_'][2]
-    var loader = common.getLoader('ntes')
+    var fromSource = opt['f'] || opt['from'] || 'ntes'
+    var log = common.createLog('search:' + fromSource, name)
+    var loader = common.getLoader(fromSource)
 
-    loader.search(null, name, function(result) {
+    if (!loader) {
+        log('failed: search source "' + fromSource + '" not exists')
+        phantom.exit(2)
+    }
+
+    loader.search(log, name, function(result) {
         if (result['code'] != 200) {
-            console.log(result['err'])
+            log(result['err'])
             phantom.exit(2)
         } else {
             var list = result['search']
             var separator = opt['separator'] || ' '
+            var outfile = null
+
+            if (opt['o'] || opt['output']) {
+                try
+                {
+                    outfile = fs.open(opt['o'] || opt['output'], { mode: 'w', charset: 'utf8' })
+                } catch (e) {
+                    log(e)
+                    phantom.exit(2)
+                }
+            }
 
             for (var i = 0; i != list.length; i++) {
                 var item = list[i]
@@ -44,11 +82,19 @@ exports.handler = function (opt) {
                 }
 
                 if (opt['a'] || opt['all'] || opt['b'] || opt['album']) {
-                    line.push(names.join(item.album_title))
+                    line.push(item.album_title)
                 }
 
-                if (line.length > 0)
-                    console.log(line.join(separator))
+                if (line.length > 0) {
+                    if (outfile)
+                        outfile.write(line.join(separator) + '\n')
+                    else
+                        console.log(line.join(separator))
+                }
+            }
+
+            if (outfile) {
+                outfile.close()
             }
 
             phantom.exit(0)
