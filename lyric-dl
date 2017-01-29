@@ -23,9 +23,17 @@ var commands = {}
 
 for (var i in commandsList) {
     var name = commandsList[i]
-    commands[name] = require(phantom.libraryPath + '/command/' + name + '.js')
+    var cmd = load('/command/' + name + '.js')
+    commands[name] = cmd
+    var aliasList = commands[name].alias
+    if (aliasList) {
+        aliasList.forEach(function(e) {
+            if (commands[e])
+                throw 'command "' + e + '" exists'
+            commands[e] = cmd
+        });
+    }
 }
-
 
 commands.help = { 
     'handler' : function (opt) {
@@ -48,7 +56,11 @@ Type 'lyric-dl help <command>' for help on a specific command.\n\
 \n\
 Available commands:")
             for (var i = 0; i != commandsList.length; i++) {
-                console.log('   ' + commandsList[i])
+                if (commands[commandsList[i]].alias) {
+                    console.log('   ' + commandsList[i] + ' (alias: ' + commands[commandsList[i]].alias.join(', ') + ')')
+                } else {
+                    console.log('   ' + commandsList[i])
+                }
             }
             console.log("\n\
 GET MORE : https://github.com/frimin/lyric-dl\
@@ -78,10 +90,8 @@ if (cmd != 'help' && args['_'].length < 2) {
     phantom.exit(2)
 }
 
-var f = commands[cmd].handler
-
-if (f) {
-    f(args)
-} else {
+if (!commands[cmd]) {
     common.errorExit("unknown command : " + args['_'][1])
 }
+
+commands[cmd].handler(args)

@@ -1,5 +1,6 @@
 // server.js
 
+exports.alias = ['ser']
 exports.help = "\
 usage:  server\n\
 \n\

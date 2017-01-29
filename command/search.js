@@ -1,6 +1,7 @@
 // search.js
 var fs = load('fs')
 
+exports.alias = ['s']
 exports.help = "\
 usage:  search <name> \n\
 \n\
