@@ -64,8 +64,16 @@ function createDownloadTask(opt, url, downloaded) {
             return done(true) // skip current url
         }
 
+        var start = Date.now()
+
         rt.loader.downloadLyric(log, rt.id, function (result) {
             downloaded[rt.id] = true
+
+            if (result['code'] == 200) {
+                log('succeed, ' + (Date.now() - start).toString() + ' msec usage')
+            } else {
+                log(result['err'])
+            }
 
             var outformat = opt['O'] || opt['out-format'] || 'lrc'
             var outdir = opt['d'] || opt['directory'] || ''

@@ -37,11 +37,15 @@ exports.handler = function (opt) {
         phantom.exit(2)
     }
 
+    var start = Date.now()
+
     loader.search(log, name, function(result) {
         if (result['code'] != 200) {
             log(result['err'])
             phantom.exit(2)
         } else {
+            log('succeed, ' + (Date.now() - start).toString() + ' msec usage')
+
             var list = result['search']
             var separator = opt['separator'] || ' '
             var outfile = null

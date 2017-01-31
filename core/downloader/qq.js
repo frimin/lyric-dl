@@ -93,8 +93,6 @@ exports.downloadLyric = function (log, id, response) {
 				}, id)
 
 				if (lrc) {
-					log('succeed')
-
 					if (lrc.indexOf('[00:00:00]此歌曲为没有') != -1) {
 						lrc = null
 					}
@@ -238,7 +236,6 @@ exports.search = function (log, name, response) {
         },
     ], function(succeed, page, result) {
         if (succeed) {
-            log('succeed')
             response(common.makeSearchResponseData(result))
         } else {
             response(common.makeFailedData(result))
@@ -246,6 +243,6 @@ exports.search = function (log, name, response) {
 
         setTimeout(function(){
             page.close();
-        }, 100)
+        }, 10)
     })
 }
