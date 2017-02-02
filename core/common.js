@@ -1,38 +1,5 @@
 var viewError = true
 
-exports.async = load('/core/async.js')
-
-exports.createPage = function (url, callback, page) {
-	if (page == null) {
-		page = new WebPage();
-		page.clipRect = { top: 0, left: 0, width: 1024, height: 768 };
-		page.viewportSize = { width: 1024, height: 768 };
-		page.settings.resourceTimeout = 8000;
-		page.settings.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36';
-		page.settings.loadImages = false
-
-		page.onError = function(msg, trace) {
-			if (!viewError)
-				return
-			var msgStack = ['ERROR: ' + msg];
-
-			if (trace && trace.length) {
-				msgStack.push('TRACE:');
-				trace.forEach(function(t) {
-					msgStack.push(' -> ' + t.file + ': ' + t.line + (t.function ? ' (in function "' + t.function +'")' : ''));
-				});
-			}
-
-			console.error(msgStack.join('\n'));
-		};
-	}
-
-	page.open(url, callback);
-	page.clearCookies()
-
-	return page
-}
-
 exports.ViewError = function (b) {
 	viewError = b
 }
@@ -63,7 +30,7 @@ exports.setLogVisible = function (b) {
 
 exports.errorExit = function(text, code) {
     console.log(text)
-    phantom.exit(code || 2)
+    process.exit(code || 2)
 }
 
 exports.sourceList = [ "nets", "qq" ]
@@ -122,8 +89,8 @@ exports.makeSearchResponseData = function(searchResult) {
 }
 
 var loader = {
-    'ntes': require(phantom.libraryPath + '/core/downloader/ntes.js'),
-    'qq': require(phantom.libraryPath + '/core/downloader/qq.js'),
+    'ntes': require('./loader/ntes.js'),
+    'qq': require('./loader/qq.js'),
 }
 
 exports.getLoader = function(name) {

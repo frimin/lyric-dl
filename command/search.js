@@ -1,5 +1,5 @@
-// search.js
-var fs = load('fs')
+var fs = require('fs')
+var common = require('../common.js')
 
 exports.alias = ['s']
 exports.help = "\
@@ -24,7 +24,7 @@ OPTIONS: \n\
 exports.handler = function (opt) {
     if (opt['_'].length < 3) {
         console.log("nothing to do")
-        phantom.exit(2)
+        process.exit(2)
     }
 
     var name = opt['_'][2]
@@ -34,7 +34,7 @@ exports.handler = function (opt) {
 
     if (!loader) {
         log('failed: search source "' + fromSource + '" not exists')
-        phantom.exit(2)
+        process.exit(2)
     }
 
     var start = Date.now()
@@ -42,7 +42,7 @@ exports.handler = function (opt) {
     loader.search(log, name, function(result) {
         if (result['code'] != 200) {
             log(result['err'])
-            phantom.exit(2)
+            process.exit(2)
         } else {
             log('succeed, ' + (Date.now() - start).toString() + ' msec usage')
 
@@ -56,7 +56,7 @@ exports.handler = function (opt) {
                     outfile = fs.open(opt['o'] || opt['output'], { mode: 'w', charset: 'utf8' })
                 } catch (e) {
                     log(e)
-                    phantom.exit(2)
+                    process.exit(2)
                 }
             }
 
@@ -102,7 +102,7 @@ exports.handler = function (opt) {
                 outfile.close()
             }
 
-            phantom.exit(0)
+            process.exit(2)
         }
     })
 } 

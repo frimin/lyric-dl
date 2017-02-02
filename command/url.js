@@ -1,4 +1,4 @@
-// url.js
+var common = require('../common.js')
 
 exports.help = "\
 usage:  url <url1 [url2 [...]]>\n\

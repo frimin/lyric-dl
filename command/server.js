@@ -1,4 +1,4 @@
-// server.js
+var common = require('../common.js')
 
 exports.alias = ['ser']
 exports.help = "\
