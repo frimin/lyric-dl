@@ -1,7 +1,10 @@
 var CryptoJS = require("crypto-js");
+var async = require('async')
 var common = require('../common')
 var http = require('http')
 var querystring = require('querystring')
+var request = require('../request')
+
 // ---------- BigInt.js copied ----------
 
 // BigInt, a suite of routines for performing multiple-precision arithmetic in
@@ -1344,27 +1347,76 @@ function encrypt(d, e, f, g) {
     h
 }
 
-exports.downloadLyric = function (log, id, response) {
+function encryptEncodeArgs(args) {
+    return querystring.stringify(encrypt(
+        JSON.stringify(args), 
+        config.encrypt.rsaEncryptionExponent,
+        config.encrypt.rsaModulus,
+        config.encrypt.aseSecretPassphrase))
+}
 
+exports.downloadLyric = function (log, id, response) {
+    var postData = encryptEncodeArgs({
+        id: id, 
+        lv: -1, 
+        tv: -1, 
+        csrf_token: ""
+    })
+
+    var query = {
+        id: id,
+        ids: `[${id}]`,
+    }
+
+    async.parallel({
+        info: (cb) => {
+            request.http_request({
+                host: 'music.163.com',
+                path: '/api/song/detail/?id=' + querystring.stringify(query),
+                method: 'GET',
+                headers: {
+                    'Referer': 'http://music.163.com/',
+                    'Origin':'http://music.163.com',
+                    'DNT': 1,
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36,',
+                },
+            }, (res, body) => {
+                cb(null, JSON.parse(body))
+            }, postData)
+        },
+        lyric : (cb) => { 
+            request.http_request({
+                host: 'music.163.com',
+                path: '/weapi/song/lyric?csrf_token=',
+                method: 'POST',
+                headers: {
+                    'Content-Length': Buffer.byteLength(postData),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Referer': 'http://music.163.com/song?id=' + id,
+                    'Origin':'http://music.163.com',
+                    'DNT': 1,
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36,',
+                },
+            }, (res, body) => {
+                cb(null, JSON.parse(body))
+            }, postData)
+        },
+    }, (err, results) => {
+        console.log(results)
+    })
 }
 
 exports.search = function (log, name, response) {
-    var args = {
+    var postData = encryptEncodeArgs({
         s: name,
         type: '1',
         offset: 0,
         total: true,
         limit: 30,
         csrf_token: '',
-    }
+    })
 
-    var postData = querystring.stringify(encrypt(
-        JSON.stringify(args), 
-        config.encrypt.rsaEncryptionExponent,
-        config.encrypt.rsaModulus,
-        config.encrypt.aseSecretPassphrase))
-
-    var req = http.request({
+    request.http_request({
         host: 'music.163.com',
         path: '/weapi/cloudsearch/get/web?csrf_token=',
         method: 'POST',
@@ -1376,21 +1428,7 @@ exports.search = function (log, name, response) {
             'DNT': 1,
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36,',
         },
-    }, (res) => { 
-        var chunklist = []
-
-        res.on('data', (chunk) => {
-            chunklist.push(chunk)
-        });
-
-        res.on('end', () => {
-            //console.log('STATUS: ' + res.statusCode); 
-            //console.log('HEADERS: ' + JSON.stringify(res.headers)) 
-            console.log(chunklist.join(''))
-        });
-    })
-
-    req.write(postData);
-    
-    req.end();
+    }, (res, body) => {
+        console.log(JSON.parse(body))
+    }, postData)
 }
