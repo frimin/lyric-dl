@@ -125,6 +125,7 @@ function createDownloadTask(opt, url, downloaded) {
                     cb(err)
                 })
             } else {
+                log('no content to write'); 
                 cb(null)
             }
         })

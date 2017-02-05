@@ -12,8 +12,8 @@ usage:  server\n\
     launch http service\n\
 \n\
 SUPPORT PATH: \n\
-    /api/search                 post data: target=<name>&from=<searchfrom> \n\
-    /api/download               post data: target=<url> \n\
+    /api/search                 sreach from name, post params: target=<name>&from=<searchfrom> \n\
+    /api/download               download lyric, post params: target=<url> \n\
 \n\
 OPTIONS: \n\
     -h --host=<host>            bind address (default: 127.0.0.1)\n\

@@ -26,7 +26,7 @@ commands.help = {
             var cmd = commands[opt['_'][3]]
             if (!cmd) {
                 console.log('command "' + opt['_'][3] + '" not exists')
-                phantom.exit(2)
+                process.exit(2)
             }
             console.log(cmd.help)
 /*
@@ -71,13 +71,13 @@ if (args['help']) {
     common.setLogVisible(false)
 }*/
 
-if (!commands[cmd]) {
-    console.error('unknown command : ' + args['_'][2])
-    process.exit(2)
+if (cmd != 'help' && args['_'].length <= 2) {
+    console.log('nothing to do')
+    process.exit(0)
 }
 
-if (cmd != 'help' && args['_'].length < 2) {
-    console.error('nothing to do')
+if (!commands[cmd]) {
+    console.error('unknown command : ' + args['_'][2])
     process.exit(2)
 }
 

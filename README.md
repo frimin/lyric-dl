@@ -1,56 +1,37 @@
-# lyric-dl
+**lyric-dl** 是一个下载在线音乐歌词的命令行工具，它是一个 Node.js 程序，在使用它之前你必须安装 [Node.js](https://nodejs.org/en/)
 
-命令行中下载 网易云音乐 / qq音乐的歌词工具
-
-# 安装
-
-对于 UNIX 用户 (Linux, OS X, 其他):
-
-需要安装 [Node.js] (https://nodejs.org)，建议同时安装 npm
-
-以及 [PhantomJS](http://phantomjs.org):
-
-	$ npm install phantomjs -g
-	
-# 使用
 
 在使用脚本之前先为其添加可执行权限
 
 	chmod u+x lyric-dl
 
-## 命令格式
+# 使用
+
+命令格式
+
 	lyric-dl [命令 [参数 [参数 ...]]] [选项]
 
-### 下载歌词
+拥有一个歌曲地址，可以通过 URL 来下载歌词，以 JSON 格式输出以获取歌曲信息
 
-直接在命令行中下载歌词:
+	./lyric-dl download <url> --out-format json
 
-	./lyric-dl url <url>
-	
-这种形式将会默认保存 <歌曲名> 到文件，如果歌词有翻译，则会额外保存一个 <歌曲名.tr> 文件
+通过歌曲名来获取搜索结果
 
-如果需要指定输出名称，请用下列形式的命令:
+	./lyric-dl search <name> --all
 
-	./lyric-dl url <url> -o <output>
-	
-如果需要更多的数据，例如演唱者，专辑名称等，请指定输出格式为 json:
+组合命令可以批量下载搜索结果的歌词
 
-	./lyric-dl url <url> -O json
+	./lyric-dl search <name> --url --output urllist && cat urllist | ./lyric-dl download - --dir .
 
-支持的链接格式：
+ 目前支持的链接格式：
 
 * **网易云音乐 (ntes)** : http://music.163.com/#/m/song?id=XXXXXX
-* **qq音乐 (qq)** : https://y.qq.com/portal/song/XXXXXX.html
 
-### 启动 Web 服务器
+# WebAPI
 
-支持启动一个 web 服务器以提供 webapi 接口:
+工具内建了一个简易的 WebServer 提供了 WebAPI 以 JSON 格式返回数据。启动 WebServer:
 
-	./lyric-dl server -h 127.0.0.1 -p 8080
-	
-可以用下列命令测试:
-	
-	curl "http://localhost:8080/?act=id&id=<song_id>&s=<source_type>"
-	
-### 获得其他帮助内容
+	./lyric-dl server
+
+# 获得其它帮助内容
 	./lyric-dl --help
