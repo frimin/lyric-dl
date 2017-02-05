@@ -5,17 +5,18 @@ if [[ -z "$1" ]]; then
     exit 2
 fi
 
+if [[ ! -d samples/download ]]; then
+    mkdir samples/download
+fi
+
 echo "searching '$1'..."
-urllist=`./lyric-dl search "$1" --url --g-quiet`
+
+./lyric-dl search "$1" -o samples/download/search_result --url
 
 if [[ $? -ne 0 ]]; then
     echo "search failed" >&2
     exit 2
 fi
 
-if [[ ! -d samples/download ]]; then
-    mkdir samples/download
-fi
-
-echo "$urllist" | ./lyric-dl url - -d samples/download
+cat samples/download/search_result | ./lyric-dl dl - -d samples/download
 

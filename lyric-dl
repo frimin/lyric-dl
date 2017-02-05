@@ -3,7 +3,7 @@
 var parseArgs = require('minimist')
 var common = require('./core/common.js')
 
-var commandsList = [ 'search' /*, 'server', 'url',*/ ]
+var commandsList = [ 'search', 'download' ]
 var commands = {}
 
 for (var i in commandsList) {
@@ -22,17 +22,18 @@ for (var i in commandsList) {
 
 commands.help = { 
     'handler' : function (opt) {
-        if (opt['_'].length > 2) {
-            var cmd = commands[opt['_'][2]]
+        if (opt['_'].length > 3) {
+            var cmd = commands[opt['_'][3]]
             if (!cmd) {
-                console.log('command "' + opt['_'][2] + '" not exists')
+                console.log('command "' + opt['_'][3] + '" not exists')
                 phantom.exit(2)
             }
             console.log(cmd.help)
+/*
             console.log("\
 GLOBAL OPTIONS:\n\
     --g-quiet                   quiet mode\n\
-")
+")*/
         } else {
             console.log("\
 Usage: lyric-dl [command [arg [arg ...]]] [OPTIONS]\n\
@@ -51,7 +52,7 @@ Available commands:")
 GET MORE : https://github.com/frimin/lyric-dl\
     ")
         }
-        phantom.exit(0)
+        process.exit(2)
     },
     "help": "usage:  help <command>\n",
 }
@@ -66,13 +67,13 @@ if (args['help']) {
 
 // handle global options
 
-if (args['g-quiet']) {
+/*if (args['g-quiet']) {
     common.setLogVisible(false)
-}
+}*/
 
 if (cmd != 'help' && args['_'].length <= 2) {
     console.log("nothing to do")
-    phantom.exit(2)
+    process.exit(2)
 }
 
 if (!commands[cmd]) {

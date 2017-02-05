@@ -1,5 +1,6 @@
 var fs = require('fs')
-var common = require('../common.js')
+var loader = require('../core/loader')
+var common = require('../core/common')
 
 exports.alias = ['s']
 exports.help = "\
@@ -7,13 +8,12 @@ usage:  search <name> \n\
 \n\
 SUPPORT SROUCE: \n\
     * ntes \n\
-    * qq \n\
 \n\
 OPTIONS: \n\
     -a --all                    print all information\n\
     -i --index                  print index\n\
     -u --url                    print url\n\
-    -t --title                  print title\n\
+    -n --name                   print name\n\
     -s --singler                print singler\n\
     -b --album                  print album\n\
     -f --from=<srouce>          search from source (default: ntes) \n\
@@ -22,24 +22,24 @@ OPTIONS: \n\
 "
 
 exports.handler = function (opt) {
-    if (opt['_'].length < 3) {
+    if (opt['_'].length < 4) {
         console.log("nothing to do")
         process.exit(2)
     }
 
-    var name = opt['_'][2]
+    var name = opt['_'][3]
     var fromSource = opt['f'] || opt['from'] || 'ntes'
     var log = common.createLog('search:' + fromSource, name)
-    var loader = common.getLoader(fromSource)
+    var loaderInst = loader[fromSource]
 
-    if (!loader) {
+    if (!loaderInst) {
         log('failed: search source "' + fromSource + '" not exists')
         process.exit(2)
     }
 
     var start = Date.now()
 
-    loader.search(log, name, function(result) {
+    loaderInst.search({ name: name, logger: log }, function(result) {
         if (result['code'] != 200) {
             log(result['err'])
             process.exit(2)
@@ -48,17 +48,7 @@ exports.handler = function (opt) {
 
             var list = result['search']
             var separator = opt['separator'] || ' '
-            var outfile = null
-
-            if (opt['o'] || opt['output']) {
-                try
-                {
-                    outfile = fs.open(opt['o'] || opt['output'], { mode: 'w', charset: 'utf8' })
-                } catch (e) {
-                    log(e)
-                    process.exit(2)
-                }
-            }
+            var lines = []
 
             for (var i = 0; i != list.length; i++) {
                 var item = list[i]
@@ -72,8 +62,8 @@ exports.handler = function (opt) {
                     line.push(item.href)
                 }
 
-                if (opt['a'] || opt['all'] || opt['t'] || opt['title']) {
-                    line.push(item.title)
+                if (opt['a'] || opt['all'] || opt['n'] || opt['name']) {
+                    line.push(item.name)
                 }
 
                 if (opt['a'] || opt['all'] || opt['s'] || opt['singler']) {
@@ -87,22 +77,26 @@ exports.handler = function (opt) {
                 }
 
                 if (opt['a'] || opt['all'] || opt['b'] || opt['album']) {
-                    line.push(item.album_title)
+                    line.push(item.album.name)
                 }
 
-                if (line.length > 0) {
-                    if (outfile)
-                        outfile.write(line.join(separator) + '\n')
-                    else
-                        console.log(line.join(separator))
-                }
+                if (line.length > 0)
+                    lines.push(line.join(separator))
             }
+
+            var outfile = opt['o'] || opt['output']
 
             if (outfile) {
-                outfile.close()
+                fs.writeFile(outfile, lines.join('\n'), (err) => { 
+                    if (err) {
+                        console.error(err)
+                        process.exit(2)
+                    }
+                })
+            } else {
+                console.log(lines.join('\n'))
+                process.exit(0)
             }
-
-            process.exit(2)
         }
     })
 } 

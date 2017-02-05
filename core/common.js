@@ -33,10 +33,8 @@ exports.errorExit = function(text, code) {
     process.exit(code || 2)
 }
 
-exports.sourceList = [ "nets", "qq" ]
-
 exports.makeFailedData = function(text) {
-	return { 'code': 400, 'err': text || "failed to request" }
+	return { 'code': 500, 'err': text || "failed to request" }
 }
 
 exports.makeLyricResponseData = function(dataList) {
@@ -56,10 +54,9 @@ exports.makeLyricResponseData = function(dataList) {
 		'id': merge['id'],
 		'name': merge['name'],
 		'tname': merge['tname'] || null,
-		'singer': merge['singer'], // { name: "", id: "" }
+		'singer': merge['singer'], // [ { name: "", id: "" }, ...]
 		'lrc': merge['lrc'] || null,
 		'tlrc': merge['tlrc'] || null,
-		// 'mv_id': merge['mv_id'] || null,
 		'album_name': merge['album_name'] || null,
 		'album_id': merge['album_id'] || null,
 		'source': merge['source'],
@@ -86,13 +83,4 @@ exports.makeSearchResponseData = function(searchResult) {
 	}
 
 	return rt
-}
-
-var loader = {
-    'ntes': require('./loader/ntes.js'),
-    'qq': require('./loader/qq.js'),
-}
-
-exports.getLoader = function(name) {
-    return loader[name]
 }

@@ -1355,7 +1355,34 @@ function encryptEncodeArgs(args) {
         config.encrypt.aseSecretPassphrase))
 }
 
-exports.downloadLyric = function (log, id, response) {
+function invokeResult(cb, res, body) {
+    if (res.statusCode != 200) {
+        return cb(`response status code ${res.statusCode}`)
+    } else {
+        if (!body || body.length == 0) {
+            return cb('empty response body')
+        }
+
+        var ret
+
+        try {
+            ret = JSON.parse(body)
+        } catch(e) {
+            return cb('failed to parse json')
+        }
+
+        if (ret.code == 200) {
+            return cb(null, ret)
+        } else {
+            return cb('invalid result')
+        }
+    }
+}
+
+exports.downloadLyric = function (options, response) {
+    var id = options.id
+    var logger = options.logger
+
     var postData = encryptEncodeArgs({
         id: id, 
         lv: -1, 
@@ -1370,6 +1397,8 @@ exports.downloadLyric = function (log, id, response) {
 
     async.parallel({
         info: (cb) => {
+            if (logger)
+                logger('load song information')
             request.http_request({
                 host: 'music.163.com',
                 path: '/api/song/detail/?id=' + querystring.stringify(query),
@@ -1381,10 +1410,12 @@ exports.downloadLyric = function (log, id, response) {
                     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36,',
                 },
             }, (res, body) => {
-                cb(null, JSON.parse(body))
-            }, postData)
+                invokeResult(cb, res, body)
+            })
         },
-        lyric : (cb) => { 
+        lyric : (cb) => {
+            if (logger)
+                logger('load lyric data')
             request.http_request({
                 host: 'music.163.com',
                 path: '/weapi/song/lyric?csrf_token=',
@@ -1398,15 +1429,52 @@ exports.downloadLyric = function (log, id, response) {
                     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36,',
                 },
             }, (res, body) => {
-                cb(null, JSON.parse(body))
+                invokeResult(cb, res, body)
             }, postData)
         },
     }, (err, results) => {
-        console.log(results)
+        try 
+        {
+            if (err) {
+                throw err
+            }
+
+            if (!results.info.songs || results.info.songs.length != 1)
+                throw 'failed to read information'
+
+            var song = results.info.songs[0]
+            var lyric = results.lyric
+
+            var singer = []
+
+            song.artists.forEach(function(e) {
+                singer.push({
+                    name: e.name,
+                    id: e.id,
+                })
+            });
+
+            response(common.makeLyricResponseData([{
+                source: 'ntes',
+                id: song.id,
+                name: song.name,
+                singer: singer,
+                lrc: lyric.lrc.lyric,
+                tlrc: lyric.tlyric.lyric,
+                nolyric: lyric.nolyric,
+                album_name: song.album.name,
+                album_id: song.album.id,
+            }]))
+        } catch (e) {
+            response(common.makeFailedData(e))
+        }
     })
 }
 
-exports.search = function (log, name, response) {
+exports.search = function (options, response) {
+    var name = options.name
+    var logger = options.logger
+    
     var postData = encryptEncodeArgs({
         s: name,
         type: '1',
@@ -1416,19 +1484,67 @@ exports.search = function (log, name, response) {
         csrf_token: '',
     })
 
-    request.http_request({
-        host: 'music.163.com',
-        path: '/weapi/cloudsearch/get/web?csrf_token=',
-        method: 'POST',
-        headers: {
-            'Content-Length': Buffer.byteLength(postData),
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Referer': 'http://music.163.com/search/',
-            'Origin':'http://music.163.com',
-            'DNT': 1,
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36,',
-        },
-    }, (res, body) => {
-        console.log(JSON.parse(body))
-    }, postData)
+    async.parallel({
+        search: (cb) => {
+            if (logger)
+                logger('load search results')
+            request.http_request({
+                host: 'music.163.com',
+                path: '/weapi/cloudsearch/get/web?csrf_token=',
+                method: 'POST',
+                headers: {
+                    'Content-Length': Buffer.byteLength(postData),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Referer': 'http://music.163.com/search/',
+                    'Origin':'http://music.163.com',
+                    'DNT': 1,
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36,',
+                },
+            }, (res, body) => {
+                invokeResult(cb, res, body)
+            }, postData)
+        }
+    }, (err, results) => {
+        try 
+        {
+            if (err) {
+                throw err
+            }
+
+            var songs = results.search.result.songs
+
+            if (!songs)
+                throw 'failed to read information'
+
+            var results = []
+
+            songs.forEach(function(e) {
+                var singler = []
+
+                e.ar.forEach(function(e) {
+                    singler.push({
+                        id: e.id,
+                        name: e.name,
+                        href: `http://music.163.com/#/artist?id=${e.id}`,
+                    })
+                })
+
+                results.push({
+                    name: e.name,
+                    href: `http://music.163.com/#/song?id=${e.id}`,
+                    id: e.id,
+                    singler: singler,
+                    album: {
+                        id: e.al.id,
+                        name: e.al.name,
+                        href: `http://music.163.com/artist?id=${e.al.id}`,
+                    }
+                })
+            });
+
+            response(common.makeSearchResponseData(results))
+        } catch (e) {
+            response(common.makeFailedData(e))
+        }
+    })
 }
