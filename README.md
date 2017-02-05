@@ -11,7 +11,7 @@
 
 	lyric-dl [命令 [参数 [参数 ...]]] [选项]
 
-拥有一个歌曲地址，可以通过 URL 来下载歌词，以 JSON 格式输出以获取歌曲信息
+拥有一个歌曲地址，可以通过 URL 来下载歌词，以 JSON 格式输出以获取歌曲信息
 
 	./lyric-dl download <url> --out-format json
 
