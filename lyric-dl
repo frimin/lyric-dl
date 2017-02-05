@@ -3,7 +3,7 @@
 var parseArgs = require('minimist')
 var common = require('./core/common.js')
 
-var commandsList = [ 'search', 'download' ]
+var commandsList = [ 'search', 'download', 'server' ]
 var commands = {}
 
 for (var i in commandsList) {
@@ -49,7 +49,7 @@ Available commands:")
                 }
             }
             console.log("\n\
-GET MORE : https://github.com/frimin/lyric-dl\
+* https://github.com/frimin/lyric-dl\
     ")
         }
         process.exit(2)
@@ -71,13 +71,14 @@ if (args['help']) {
     common.setLogVisible(false)
 }*/
 
-if (cmd != 'help' && args['_'].length <= 2) {
-    console.log("nothing to do")
+if (!commands[cmd]) {
+    console.error('unknown command : ' + args['_'][2])
     process.exit(2)
 }
 
-if (!commands[cmd]) {
-    common.errorExit("unknown command : " + args['_'][2])
+if (cmd != 'help' && args['_'].length < 2) {
+    console.error('nothing to do')
+    process.exit(2)
 }
 
 commands[cmd].handler(args)

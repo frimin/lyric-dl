@@ -2,7 +2,6 @@ var fs = require('fs')
 var loader = require('../core/loader')
 var common = require('../core/common')
 
-exports.alias = ['s']
 exports.help = "\
 usage:  search <name> \n\
 \n\
@@ -11,7 +10,6 @@ SUPPORT SROUCE: \n\
 \n\
 OPTIONS: \n\
     -a --all                    print all information\n\
-    -i --index                  print index\n\
     -u --url                    print url\n\
     -n --name                   print name\n\
     -s --singler                print singler\n\
@@ -53,10 +51,6 @@ exports.handler = function (opt) {
             for (var i = 0; i != list.length; i++) {
                 var item = list[i]
                 var line = []
-
-                if (opt['a'] || opt['all'] || opt['i'] || opt['index']) {
-                    line.push(i.toString())
-                }
 
                 if (opt['a'] || opt['all'] || opt['u'] || opt['url']) {
                     line.push(item.href)

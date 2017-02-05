@@ -8,11 +8,18 @@ exports.http_request = function (options, response, postData){
             chunklist.push(chunk)
         });
         res.on('end', () => {
-            response(res, chunklist.join(''))
+            response(null, res, chunklist.join(''))
         });
     })
+
+    req.on('error', (err) => {
+        console.error(err.message)
+        response(err.message, null, null)
+    })
+
     if (postData) {
         req.write(postData)
     }
-    req.end();
+
+    req.end()
 }
