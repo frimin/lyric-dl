@@ -1,7 +1,6 @@
 var CryptoJS = require("crypto-js");
 var async = require('async')
 var common = require('../common')
-var http = require('http')
 var querystring = require('querystring')
 var request = require('../request')
 var rsa = require('../rsa')
@@ -168,8 +167,10 @@ exports.downloadLyric = function (options, response) {
                 lrc: lyric.lrc && lyric.lrc.lyric || null,
                 tlrc: lyric.tlyric && lyric.tlyric.lyric || null,
                 nolyric: lyric.nolyric,
-                album_name: song.album.name,
-                album_id: song.album.id,
+                album: {
+                    name: song.album.name,
+                    id: song.album.id,
+                },
             }]))
         } catch (e) {
             response(common.makeFailedData(e))
@@ -246,7 +247,7 @@ exports.search = function (options, response) {
                         href: `http://music.163.com/artist?id=${e.al.id}`,
                     }
                 })
-            });
+            })
 
             response(common.makeSearchResponseData(results))
         } catch (e) {

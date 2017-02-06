@@ -7,6 +7,7 @@ usage:  search <name> \n\
 \n\
 SUPPORT SROUCE: \n\
     * ntes \n\
+    * qq\n\
 \n\
 OPTIONS: \n\
     -a --all                    print all information\n\

@@ -12,6 +12,7 @@ usage:  download <url1 [url2 [...]]>\n\
 \n\
 SUPPORT URL FORMAT: \n\
     * ntes (cloudmusic) : http://music.163.com/#/m/song?id=<ID> \n\
+    * qq (qqmusic) : https://y.qq.com/portal/song/<ID>.html \n\
 \n\
 OPTIONS: \n\
     -o --output=<file>          name of output file, if translate lyric exists, named: <file>.tr\n\
@@ -33,6 +34,15 @@ function parseUrl(url) {
             throw `can not read id'`
         } else {
             loaderInst = loader['ntes']
+            song_id = m[1]
+        }
+    } else if (url.indexOf('https://y.qq.com/portal/song/') != -1) {
+        var m = url.match(/song\/(\w+)\.html/)
+
+        if (!m || m.length != 2) {
+            return false
+        } else {
+            loaderInst = loader['qq']
             song_id = m[1]
         }
     }
@@ -147,7 +157,6 @@ function downloadList(opt, urlList) {
 
     async.series(downloadTasks, function (err, results) {
         if (!err) {
-            console.log('done')
             process.exit(0)
         } else {
             console.error(`download abort: ${err}`)

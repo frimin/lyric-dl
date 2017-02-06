@@ -23,9 +23,10 @@
 
 	./lyric-dl search <name> --url --output urllist && cat urllist | ./lyric-dl download - --dir .
 
- 目前支持的链接格式：
+目前支持的网站：
 
-* **网易云音乐 (ntes)** : http://music.163.com/#/m/song?id=XXXXXX
+* **网易云音乐 (ntes)** :
+* **QQ音乐 (qq)**
 
 # WebAPI
 

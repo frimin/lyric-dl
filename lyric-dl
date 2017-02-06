@@ -36,6 +36,8 @@ GLOBAL OPTIONS:\n\
 ")*/
         } else {
             console.log("\
+Lyrics download tools.\n\
+\n\
 Usage: lyric-dl [command [arg [arg ...]]] [OPTIONS]\n\
 \n\
 Type 'lyric-dl help <command>' for help on a specific command.\n\

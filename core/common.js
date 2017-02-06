@@ -57,11 +57,12 @@ exports.makeLyricResponseData = function(dataList) {
 		'singer': merge['singer'], // [ { name: "", id: "" }, ...]
 		'lrc': merge['lrc'] || null,
 		'tlrc': merge['tlrc'] || null,
-		'album_name': merge['album_name'] || null,
-		'album_id': merge['album_id'] || null,
+		'album': merge['album'] || null,
 		'source': merge['source'],
 		'code': 200,
 	}
+
+    StringDecoder = require('string_decoder').StringDecoder
 
 	rt['nolyric'] = merge['nolyric'] || (!rt['lrc'] && true || false)
 
