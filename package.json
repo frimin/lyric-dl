@@ -1,0 +1,29 @@
+{
+  "name": "lyric-dl",
+  "version": "0.1.0",
+  "description": "Lyrics download tools",
+  "main": "index.js",
+  "dependencies": {
+    "async": "^2.1.4",
+    "minimist": "^1.2.0",
+    "crypto-js": "^3.1.9-1",
+    "html-decoder": "^1.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://frimin@github.com/frimin/lyric-dl.git"
+  },
+  "keywords": [
+    "lyric"
+  ],
+  "author": "frimin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/frimin/lyric-dl/issues"
+  },
+  "homepage": "https://github.com/frimin/lyric-dl#readme"
+}
