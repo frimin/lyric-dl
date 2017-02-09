@@ -25,15 +25,10 @@ commands.help = {
         if (opt['_'].length > 3) {
             var cmd = commands[opt['_'][3]]
             if (!cmd) {
-                console.log('command "' + opt['_'][3] + '" not exists')
+                console.error('command "' + opt['_'][3] + '" not exists')
                 process.exit(2)
             }
             console.log(cmd.help)
-/*
-            console.log("\
-GLOBAL OPTIONS:\n\
-    --g-quiet                   quiet mode\n\
-")*/
         } else {
             console.log("\
 Lyrics download tools.\n\
@@ -67,15 +62,9 @@ if (args['help']) {
     cmd = 'help'
 }
 
-// handle global options
-
-/*if (args['g-quiet']) {
-    common.setLogVisible(false)
-}*/
-
 if (cmd != 'help' && args['_'].length <= 2) {
-    console.log('nothing to do')
-    process.exit(0)
+    console.error('nothing to do')
+    process.exit(2)
 }
 
 if (!commands[cmd]) {

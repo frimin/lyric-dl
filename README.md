@@ -25,11 +25,11 @@
 
 通过歌曲名来获取搜索结果
 
-	lyric-dl search <name> --all
+	lyric-dl search <name>
 
 组合命令可以批量下载搜索结果的歌词
 
-	lyric-dl search <name> --url --output urllist && cat urllist | ./lyric-dl download - --dir .
+	lyric-dl search <name> | lyric-dl dl -
 
 # WebAPI
 
