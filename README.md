@@ -1,3 +1,5 @@
+## Lyrics Download Tools
+
 **lyric-dl** 是一个下载在线音乐歌词的命令行工具，它是一个 Node.js 程序，在使用它之前你必须安装 [Node.js](https://nodejs.org/en/)
 
 目前支持的网站：
@@ -13,7 +15,7 @@
 
 	npm update lyric-dl -g
 
-# 使用
+### 使用
 
 命令格式
 
@@ -31,11 +33,11 @@
 
 	lyric-dl search <name> | lyric-dl dl -
 
-# WebAPI
+### WebAPI
 
 工具内建了一个简易的 WebServer 提供了 WebAPI 以 JSON 格式返回数据。启动 WebServer:
 
 	lyric-dl server
 
-# 获得其它帮助内容
+### 获得其它帮助内容
 	lyric-dl --help
