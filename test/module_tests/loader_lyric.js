@@ -7,11 +7,11 @@ var loader = require(`../../lib/core/loader/${type}`)
 
 test.assert(loader, 'invailed loader')
 
-loader.search({ name: 'I' }, (result) => {
+loader.search({ name: 'I', start: 2, length: 20 }, (result) => {
     test.assert(!result['err'], result['err'])
     test.assert(result['search'].length > 0, 'search results wrong')
 
-    console.log('search results amount: ' + result['search'].length)
+    console.log(`part amount: ${result.search.length} total: ${result.total} `)
     
     loader.download({ id: result['search'][0].id }, (result) => {
         test.assert(!result['err'], result['err'])

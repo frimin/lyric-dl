@@ -3,11 +3,11 @@
 search_name="123"
 
 test_start "search from ntes"
-lyric-dl search $search_name -u -f ntes > $temp_dir/ntes_results
+lyric-dl search $search_name -u -r 0,20 -f ntes > $temp_dir/ntes_results
 test_end
 
 test_start "search from qq"
-lyric-dl search $search_name -u -f qq > $temp_dir/qq_results
+lyric-dl search $search_name -u -r 0,20 -f qq > $temp_dir/qq_results
 test_end
 
 test_start "download from ntes"
