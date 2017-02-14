@@ -31,7 +31,7 @@
 
 组合命令可以批量下载搜索结果的歌词
 
-	lyric-dl search <name> | lyric-dl dl -
+	lyric-dl search <name> --url | lyric-dl dl -
 
 ### WebAPI
 
