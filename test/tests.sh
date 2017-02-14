@@ -26,10 +26,9 @@ if [[ ! -d $temp_dir ]]; then
 fi
 
 case $1 in
-    api) . test/api_tests.sh;;
     command) . test/command_tests.sh;;
     module) . test/module_tests.sh;;
-    *) . test/module_tests.sh && . test/command_tests.sh && . test/api_tests.sh ;;
+    *) . test/module_tests.sh && . test/command_tests.sh ;;
 esac
 
 exit_code=$?
