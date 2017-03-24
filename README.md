@@ -21,17 +21,19 @@
 
 	lyric-dl [命令 [参数 [参数 ...]]] [选项]
 
-拥有一个歌曲地址，可以通过 URL 来下载歌词，以 JSON 格式输出以获取歌曲信息
+拥有一个歌曲地址，可以通过 URL 来下载歌词，以 JSON 格式输出到标准输出以获取歌曲信息
 
-	lyric-dl download <url> --out-format json
+	lyric-dl download <url> --output - --out-format json
 
 通过歌曲名来获取搜索结果
 
 	lyric-dl search <name>
 
-组合命令可以批量下载搜索结果的歌词
+使用管道批量下载搜索结果的歌词到当前目录
 
 	lyric-dl search <name> --url | lyric-dl dl -
+	
+在下载命令中可以指定 **--extract** 选项，该选项会提取歌词的正文内容，剔除标题等其他信息
 
 ### WebAPI
 
