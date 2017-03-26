@@ -2,5 +2,6 @@
 .gitignore
 .git
 .vscode
+out
 example
 node_modules

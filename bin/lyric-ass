@@ -1,0 +1,154 @@
+#!/usr/bin/env node
+
+var fs = require('fs')
+var parseArgs = require('minimist')
+var lyric_dl = require('../index.js')
+var ass = require('../lib/ass/ass')
+
+var args = parseArgs(process.argv)
+
+if (args['h'] || args['help']) {
+    console.log("\
+ASS format lyrics generator.\n\
+\n\
+Usage: lyric-ass [OPTIONS] [url | filename]\n\
+\n\
+OPTIONS: \n\
+    -S --timeshift=<code>        ()\n\
+    -f --frame-size=<size>\n\
+    -e --edit-mode\n\
+    -s --style=<stylename>\n\
+    -h --help\n\
+\n\
+TIME SHIFT:\n\
+    \"1d,4+1.33,5-1.3\"\n\
+")
+    process.exit(0)
+}
+
+function handleSong(songInfo) {
+    if (!songInfo.lrc) {
+        console.error('lyrics data not exists')
+        process.exit(2)
+    }
+
+    // set translate to map
+    if (songInfo.tlrc) {
+        var tlrc_map = {}
+        
+        songInfo.tlrc.forEach((v, k) => {
+            tlrc_map[v[0]] = v[1]
+        })
+    }
+
+    var defaultDurationTime = 6
+
+    var lyrics = []
+
+    // convert time string to float number and merge lyrics
+    songInfo.lrc.forEach((v, k) => {
+        var m = v[0].match(/^(\d+):(\d+\.\d+)$/)
+        if (!m || m.length != 3)
+            throw `failed match time: "${e}"`
+
+        lyrics.push({
+            'index': k + 1,
+            'origalTime': v[0],
+            'time': parseInt(m[1]) * 60 + parseFloat(m[2]) + 0.7  , 
+            'text': v[1],
+            'translate': tlrc_map[v[0]],
+        })
+    })
+
+    for (var i = 0; i != lyrics.length; i++) {
+        var thisLine = lyrics[i]
+        var lastLine = lyrics[i + 1]
+
+        if (lastLine) {
+            thisLine.durationTime = Math.min(lastLine.time - thisLine.time, defaultDurationTime)
+        } else {
+            thisLine.durationTime = defaultDurationTime
+        }
+    }
+
+    var assGenerator = new ass.ASSGenerator({
+        'title': '??',
+    })
+
+    assGenerator.createStyle({
+        'name': 'style_1',
+        'fontName': 'Apple SD Gothic Neo',
+        'fontSize': 40,
+    })
+
+    assGenerator.createStyle({
+        'name': 'style_2',
+        'fontName': 'Apple SD Gothic Neo',
+        'fontSize': 50,
+    })
+
+    var textPos = assGenerator.toRelativePos([150, 928], [1920, 1080])
+    var translatePos = assGenerator.toRelativePos([150, 980], [1920, 1080])
+    var moveStep = assGenerator.toRelativePos([10, 0], [1920, 1080])
+
+    var textEffect = assGenerator.fadEffect(80,80) + assGenerator.moveEffect(
+        [textPos[0] - moveStep[0], textPos[1]],
+        [textPos[0] + moveStep[0] * 2, textPos[1]])
+
+    var translateEffect = assGenerator.fadEffect(80,80) + assGenerator.moveEffect(
+        translatePos,
+        [translatePos[0] + moveStep[0] * 2, translatePos[1]])
+
+    lyrics.forEach((v) => {
+        if (v.text) {
+            assGenerator.createEvent({
+                'start': v.time,
+                'end': v.time + v.durationTime,
+                'style': 'style_1',
+                'text':  textEffect + v.text,
+            })
+        }
+
+        if (v.translate) {
+            assGenerator.createEvent({
+                'start': v.time,
+                'end': v.time + v.durationTime,
+                'style': 'style_2',
+                'text': translateEffect + v.translate,
+            })
+        }
+    })
+
+    fs.writeFile(`${songInfo.name}.ass`, assGenerator.getContent(), (err) => {
+        if (err) throw err;
+        process.exit(0)
+    })
+    
+}
+
+if (args['_'].length < 3) {
+    console.error('no url or filename input')
+} else if (args['_'].length > 3) {
+    console.error('can\'t input multiple url or filename ')
+}
+
+var url = args['_'][2]
+
+try{
+    var info = lyric_dl.getLoaderFromUrl(url)
+} catch (e) {
+    console.error(`${e}: "${url}"`)
+    process.exit(2)
+}
+
+info.loader.download({ 
+    id: info.id, 
+    extract: true
+}, function (result) {
+    if (result.err) {
+        console.error(`request error: ${result.err}`)
+        process.exit(2)
+    }
+
+    setTimeout(handleSong, 0, result)
+})
