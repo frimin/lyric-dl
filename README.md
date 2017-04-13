@@ -15,6 +15,14 @@
 
 	npm update lyric-dl -g
 
+OR
+
+	git clone https://github.com/frimin/lyric-dl
+	cd lyric-dl
+	npm install
+	ln -s bin/lyric-dl lyric-dl
+	./lyric-dl dl <URL>
+
 ### 使用
 
 命令格式

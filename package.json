@@ -1,6 +1,6 @@
 {
   "name": "lyric-dl",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Lyrics download tools",
   "main": "index.js",
   "dependencies": {
