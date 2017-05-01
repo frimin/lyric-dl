@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-PATH=$PATH:$(pwd)/bin
+PATH=$(pwd)/bin:$PATH
 
 function test_start() {
     echo "test case : '$1'"
