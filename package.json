@@ -16,7 +16,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "sh test/tests.sh"
+    "test": "bash test/tests.sh"
   },
   "repository": {
     "type": "git",
