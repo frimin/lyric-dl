@@ -1,8 +1,19 @@
 #!/usr/bin/env node
 
 var program = require('commander');
+var common = require('../lib/core/common');
+var state = {};
 
-require('../lib/command/download').init(program);
-require('../lib/command/search').init(program);
+program.description("Lyrics download tools, support:\n\
+    - ntes (163cloudmusic) \n\
+    - qq (qqmusic)");
+
+require('../lib/command/download').init(state, program);
+require('../lib/command/search').init(state, program);
 
 program.parse(process.argv);
+
+if (typeof state.execCmd === 'undefined') {
+   console.error('no command given, use "--help" or "<cmd> --help" option to get usage information.');
+   common.errorExit();
+}

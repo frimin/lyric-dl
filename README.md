@@ -39,15 +39,6 @@ OR
 
 使用管道批量下载搜索结果的歌词到当前目录
 
-	lyric-dl search <name> --url | lyric-dl dl -
+	lyric-dl search <name> --output-url | lyric-dl dl -
 	
 在下载命令中可以指定 **--extract** 选项，该选项会提取歌词的正文内容，剔除标题等其他信息
-
-### WebAPI
-
-工具内建了一个简易的 WebServer 提供了 WebAPI 以 JSON 格式返回数据。启动 WebServer:
-
-	lyric-dl server
-
-### 获得其它帮助内容
-	lyric-dl --help

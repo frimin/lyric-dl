@@ -3,7 +3,7 @@
 search_name="123"
 
 test_case "search from ntes"
-lyric-dl search $search_name --print-url -r 0,20 -f ntes > "$temp_dir/ntes_results"
+lyric-dl search $search_name --output-url -r 0,20 -f ntes > "$temp_dir/ntes_results"
 test_end
 
 test_case "check ntes result amount"
@@ -12,7 +12,7 @@ ntes_results=($(cat "$temp_dir/ntes_results"))
 test_end
 
 test_case "search from qq"
-lyric-dl search $search_name --print-url -r 0,20 -f qq > $temp_dir/qq_results
+lyric-dl search $search_name --output-url -r 0,20 -f qq > $temp_dir/qq_results
 test_end
 
 test_case "check qq result amount"

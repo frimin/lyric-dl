@@ -11,7 +11,7 @@ fi
 
 echo "searching '$1'..."
 
-lyric-dl search "$1" -o samples/download/search_result --url
+lyric-dl search "$1" -o samples/download/search_result --output-url
 
 if [[ $? -ne 0 ]]; then
     echo "search failed" >&2
