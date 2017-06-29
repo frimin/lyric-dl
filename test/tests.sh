@@ -2,7 +2,7 @@
 
 PATH=$(pwd)/bin:$PATH
 
-succeeded_count=0
+succeed_count=0
 failed_count=0
 
 test_case () {
@@ -14,7 +14,7 @@ test_end() {
         ((failed_count++))
         echo "failed"
     else
-        ((succeeded_count++))
+        ((succeed_count++))
         if [[ -z "$1" ]]; then
             echo "ok"
         else
@@ -31,7 +31,7 @@ temp_dir="test/.temp"
 
 rm -rf $temp_dir
 
-echo "$succeeded_count succeeded, $failed_count failed"
+echo "$succeed_count succeed, $failed_count failed"
 
 if [[ $failed_count -eq 0 ]]; then
     exit 0
