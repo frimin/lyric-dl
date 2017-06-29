@@ -7,7 +7,8 @@
     "async": "^2.1.4",
     "commander": "^2.9.0",
     "crypto-js": "^3.1.9-1",
-    "html-decoder": "^1.0.2"
+    "html-decoder": "^1.0.2",
+    "cheerio": "1.0.0-rc.1"
   },
   "directories": {
       "bin": "./bin",
