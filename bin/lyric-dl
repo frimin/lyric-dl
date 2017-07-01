@@ -2,14 +2,30 @@
 
 var program = require('commander');
 var common = require('../lib/core/common');
+var loader  = require('../lib/core/loader');
+
 var state = {};
 
-program.description("Lyrics download tools, support:\n\
-    - ntes (163cloudmusic) \n\
-    - qq (qqmusic)");
+program
+    .description("Lyrics download tools, support:\n\
+    - ntes (163 cloud music) \n\
+    - qq (qq music)\n\
+    - xiami (xiami music)");
+
+state.globalOptions = function (options) {
+}
 
 require('../lib/command/download').init(state, program);
 require('../lib/command/search').init(state, program);
+
+program
+    .command('list')
+    .description('show all available loader')
+    .alias('l')
+    .action(function(args, options){
+        state.execCmd = true;
+        console.log(loader.list.join('\n'));
+    });
 
 program.parse(process.argv);
 
